@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "flapi"
+version = "0.1.0"
+description = "Remotely control FL Studio using the MIDI Controller Scripting API"
+authors = ["Miguel Guthridge <hdsq@outlook.com.au>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fl-studio-api-stubs = ">=28.2.2"
+mido = "^1.3.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
