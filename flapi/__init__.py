@@ -3,7 +3,8 @@
 
 Remotely control FL Studio using the MIDI Controller Scripting API.
 """
-from .flapi import enable
+from .flapi_old import enable
+from . import errors
 
 
-__all__ = ['enable']
+__all__ = ['errors', 'enable']

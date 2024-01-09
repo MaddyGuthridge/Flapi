@@ -6,9 +6,9 @@ to the FL Studio API correctly.
 """
 from dataclasses import dataclass
 from mido.ports import BaseOutput, BaseInput
-from types import FunctionType
 from typing import Optional
 from flapi.errors import FlapiContextError
+from flapi.__decorate import ApiCopyType
 
 
 @dataclass
@@ -23,7 +23,7 @@ class FlapiContext:
     The Mido port that Flapi uses to receive messages from FL Studio
     """
 
-    functions_backup: dict[str, dict[str, FunctionType]]
+    functions_backup: ApiCopyType
     """
     References to all the functions we replaced in the FL Studio API, so that
     we can set them back as required.
