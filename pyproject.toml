@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 fl-studio-api-stubs = ">=28.2.2"
-mido = "^1.3.0"
+mido = {extras = ["ports-rtmidi"], version = "^1.3.2"}
 
 
 [build-system]

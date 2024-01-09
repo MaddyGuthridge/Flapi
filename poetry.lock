@@ -73,24 +73,25 @@ referencing = ">=0.28.0"
 
 [[package]]
 name = "mido"
-version = "1.3.0"
+version = "1.3.2"
 description = "MIDI Objects for Python"
 category = "main"
 optional = false
 python-versions = "~=3.7"
 files = [
-    {file = "mido-1.3.0-py3-none-any.whl", hash = "sha256:a710a274c8a1a3fd481f526d174a16e117b5e58d719ad92937a67fb6167a9432"},
-    {file = "mido-1.3.0.tar.gz", hash = "sha256:84282e3ace34bca3f984220db2dbcb98245cfeafb854260c02e000750dca86aa"},
+    {file = "mido-1.3.2-py3-none-any.whl", hash = "sha256:9f5668d2eae78e43d54f4c651f8bf41a614eb23f98ce5179d3ddd984bf19eb58"},
+    {file = "mido-1.3.2.tar.gz", hash = "sha256:3aea28b6ed730f737d5b12da3578debe9dc50058fa370fe9ceded9189b67c348"},
 ]
 
 [package.dependencies]
 packaging = ">=23.1,<24.0"
+python-rtmidi = {version = ">=1.5.4,<1.6.0", optional = true, markers = "extra == \"ports-rtmidi\""}
 
 [package.extras]
 build-docs = ["sphinx (>=4.3.2,<4.4.0)", "sphinx-rtd-theme (>=1.2.2,<1.3.0)"]
 check-manifest = ["check-manifest (>=0.49)"]
-dev = ["mido[build-docs]", "mido[check-manifest]", "mido[lint-code]", "mido[lint-reuse]", "mido[release]", "mido[test]"]
-lint-code = ["flake8 (>=5.0.4,<5.1.0)"]
+dev = ["mido[build-docs]", "mido[check-manifest]", "mido[lint-code]", "mido[lint-reuse]", "mido[release]", "mido[test-code]"]
+lint-code = ["ruff (>=0.1.6,<0.2.0)"]
 lint-reuse = ["reuse (>=1.1.2,<1.2.0)"]
 ports-all = ["mido[ports-pygame]", "mido[ports-rtmidi-python]", "mido[ports-rtmidi]"]
 ports-pygame = ["PyGame (>=2.5,<3.0)"]
@@ -109,6 +110,42 @@ python-versions = ">=3.7"
 files = [
     {file = "packaging-23.1-py3-none-any.whl", hash = "sha256:994793af429502c4ea2ebf6bf664629d07c1a9fe974af92966e4b8d2df7edc61"},
     {file = "packaging-23.1.tar.gz", hash = "sha256:a392980d2b6cffa644431898be54b0045151319d1e7ec34f0cfed48767dd334f"},
+]
+
+[[package]]
+name = "python-rtmidi"
+version = "1.5.8"
+description = "A Python binding for the RtMidi C++ library implemented using Cython."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "python_rtmidi-1.5.8-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:efc07413b30b0039c0d35abe25a81d740c7405124eb58eed141a8f24388e6fe0"},
+    {file = "python_rtmidi-1.5.8-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:844bd12840c9d4e03dfc89b2cd57c55dcbf5ed7246504d69c6c661732249b19c"},
+    {file = "python_rtmidi-1.5.8-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:8bbaf7c7164471712a93ac60c8f9ed146b336a294a5103223bbaf8f10709a0bf"},
+    {file = "python_rtmidi-1.5.8-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:878ce085dfb65c0974810a7e919f73708cbb4c0430c7924b78f25aea1dd4ebee"},
+    {file = "python_rtmidi-1.5.8-cp310-cp310-win_amd64.whl", hash = "sha256:f2138005c6bd3d8b9af05df383679f6d0827d16056e68a941110732310dcb7dd"},
+    {file = "python_rtmidi-1.5.8-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:30d117193dcad8af67c600c405f53eb096e4ff84849760be14c97270af334922"},
+    {file = "python_rtmidi-1.5.8-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:4e234dca7f9d783dd3f1e9c9c5c2f295f02b7af3085301d6eed3b428cf49d327"},
+    {file = "python_rtmidi-1.5.8-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:271d625c489fffb39b3edc5aba67f7c8e29a04a0a0f056ce19e5a888a08b4c59"},
+    {file = "python_rtmidi-1.5.8-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:46bbf32c8a4bf6c8f0df1c02a68689d0757f13cb7a69f27ccbbed3d7b2365918"},
+    {file = "python_rtmidi-1.5.8-cp311-cp311-win_amd64.whl", hash = "sha256:cfea32c91752fa7aecfe3d6827535c190ba0e646a9accd6604f4fc70cf4b780f"},
+    {file = "python_rtmidi-1.5.8-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:5443634597eb340cdec0734f76267a827c2d366f00a6f9195141c78828016ac2"},
+    {file = "python_rtmidi-1.5.8-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:29d9c9d9f82ce679fecad7bb4cb79f3a24574ea84600e377194b4cc1baacec0e"},
+    {file = "python_rtmidi-1.5.8-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:25f5a5db7be98911c41ca5bebb262fcf9a7c89600b88fd3c207ceafd3101e721"},
+    {file = "python_rtmidi-1.5.8-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:cec30924e305f55284594ccf35a71dee7216fd308dfa2dec1b3ed03e6f243803"},
+    {file = "python_rtmidi-1.5.8-cp312-cp312-win_amd64.whl", hash = "sha256:052c89933cae4fca354012d8ca7248f4f9e1e3f062471409d48415a7f7d7e59e"},
+    {file = "python_rtmidi-1.5.8-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:7bce7f17c71a71d8ef0bfeae3cb8a7652dd02f0d5067de882e1ee44eb38518db"},
+    {file = "python_rtmidi-1.5.8-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:1d5da765184150fb946043d59be4039b36a8060ede025f109ef20492dbf99075"},
+    {file = "python_rtmidi-1.5.8-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:a5582983ad57ea7f0a7797ddc3e258efb00f8326113b6ddfa85b5165a4151806"},
+    {file = "python_rtmidi-1.5.8-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:c60dd180e5130fb87571e71aea30e2ef0512131aab45865a7d67063ed8e52ca4"},
+    {file = "python_rtmidi-1.5.8-cp38-cp38-win_amd64.whl", hash = "sha256:26149186367341bf5b0a3ac17b495f6a25950bd3da6b4f13d25ac0a9ce8208dd"},
+    {file = "python_rtmidi-1.5.8-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:82e61bc1b51aa91d9e615827056e80f78dbe364248eecd61698b233f7af903f6"},
+    {file = "python_rtmidi-1.5.8-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:a706e9850e22acc57fa840c60fdc4541baafe462a05ff7631a6d9eb91c65e171"},
+    {file = "python_rtmidi-1.5.8-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:5966172ed28add6ff2b76d389702931bfc7ff3cc741c0e4b0d1aaae269ab7a8e"},
+    {file = "python_rtmidi-1.5.8-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:29661939f9b7bd1a4e29835f50f4790e741dacd21a5cb143297aefb51deefdec"},
+    {file = "python_rtmidi-1.5.8-cp39-cp39-win_amd64.whl", hash = "sha256:dd2bcbea822488fca6b8d9fc7e78a91da12914f3b88dc086f051cb65a643449f"},
+    {file = "python_rtmidi-1.5.8.tar.gz", hash = "sha256:7f9ade68b068ae09000ecb562ae9521da3a234361ad5449e83fc734544d004fa"},
 ]
 
 [[package]]
@@ -237,4 +274,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "6d52723b15d38b79a064bd400699e51261e6b887767649a5baff40695fed3545"
+content-hash = "26a687047ee2ef3f98a55adbcb0c2e986457f265750f03cf424b1a7931cf5225"
