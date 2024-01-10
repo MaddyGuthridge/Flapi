@@ -45,10 +45,7 @@ def getContext() -> FlapiContext:
     Get a reference to the Flapi context
     """
     if context is None:
-        raise FlapiContextError(
-            "Could not find Flapi context. Perhaps you haven't initialised "
-            "Flapi by calling `flapi.enable()`."
-        )
+        raise FlapiContextError()
     return context
 
 
@@ -59,10 +56,7 @@ def popContext() -> FlapiContext:
     """
     global context
     if context is None:
-        raise FlapiContextError(
-            "Could not find Flapi context. Perhaps you haven't initialised "
-            "Flapi by calling `flapi.enable()`."
-        )
+        raise FlapiContextError()
     ret = context
     context = None
     return ret

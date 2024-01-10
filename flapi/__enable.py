@@ -32,7 +32,6 @@ def open_port(port_name: str, port_names: list[str], open: OpenPortFn[T]) -> T:
         # If the only thing after it is a number, we are free to connect to it
         # It seems that something appends these numbers to each MIDI device to
         # make them more unique or something
-        print(curr_port_name)
         if port_name not in curr_port_name:
             continue
         try:

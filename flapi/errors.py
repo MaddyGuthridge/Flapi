@@ -34,6 +34,11 @@ class FlapiContextError(Exception):
     """
     Flapi wasn't initialised, so its context could not be loaded
     """
+    def __init__(self) -> None:
+        super().__init__(
+            "Could not find Flapi context. Perhaps you haven't initialised "
+            "Flapi by calling `flapi.enable()`."
+        )
 
 
 class FlapiInvalidMsgError(ValueError):

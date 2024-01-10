@@ -22,17 +22,16 @@ def bytes_to_str(msg: bytes) -> str:
 
 def OnInit():
     print("Flapi server")
-    print(".".join(str(n) for n in consts.VERSION))
-    print(device.getName())
-    print(device.isAssigned())
-    print(device.getPortNumber())
+    print(f"v{'.'.join(str(n) for n in consts.VERSION)}")
+    print(f"Device name: {device.getName()}")
+    print(f"Device assigned: {bool(device.isAssigned())}")
+    print(f"FL Studio port number: {device.getPortNumber()}")
 
 
 def heartbeat():
     """
     Received a heartbeat message
     """
-    print("Heartbeat")
     # Send the response
     device.midiOutSysex(
         bytes([0xF0])
@@ -46,8 +45,8 @@ def fl_exec(code: str):
     """
     Execute some code
     """
-    print(f"exec: '{code}'")
     try:
+        # Exec in global scope so that the imports are remembered
         exec(code, globals())
     except Exception as e:
         # Something went wrong, give the error
@@ -60,7 +59,6 @@ def fl_exec(code: str):
         )
 
     # Operation was a success, give response
-    print("success")
     device.midiOutSysex(
         bytes([0xF0])
         + consts.SYSEX_HEADER
@@ -73,9 +71,9 @@ def fl_eval(expression: str):
     """
     Evaluate an expression
     """
-    print(f"eval: '{expression}'")
     try:
-        result = eval(expression)
+        # Eval in the global scope
+        result = eval(expression, globals())
     except Exception as e:
         # Something went wrong, give the error
         return device.midiOutSysex(
@@ -99,8 +97,6 @@ def fl_eval(expression: str):
 def OnSysEx(event: FlMidiMsg):
     header = event.sysex[1:7]  # Sysex header
     data = event.sysex[7:-1]  # Any remaining sysex data
-
-    print(bytes_to_str(event.sysex))
 
     # Make sure the header matches the expected header
     assert header == consts.SYSEX_HEADER

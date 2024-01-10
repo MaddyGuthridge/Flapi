@@ -15,24 +15,6 @@ from . import __consts as consts
 from .errors import FlapiTimeoutError, FlapiInvalidMsgError
 
 
-# def fl_midi_msg_from_mido_msg(msg: MidoMsg) -> FlMidiMsg:
-#     """
-#     Convert a Mido message to an FlMidiMsg for nicer processing (I cannot
-#     function unless I have type safety, so therefore Mido messages are
-#     fundamentally incompatible with my brain)
-#     """
-#     data: list[int] = msg.bytes()
-#
-#     if msg.type == 'sysex':  # type: ignore
-#         # Sysex - add the start byte so it behaves nicely
-#         return FlMidiMsg(bytes([0xF0]) + bytes(data))
-#     else:
-#         # Standard message
-#         assert len(data) == 3
-#         status, data1, data2 = data
-#         return FlMidiMsg(status, data1, data2)
-
-
 def bytes_to_str(msg: bytes) -> str:
     """
     Helper to give a nicer representation of bytes
@@ -65,9 +47,11 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
     # Handle loopback (prevent us from receiving our own messages)
     if (
         msg.startswith(b'\xF0' + consts.SYSEX_HEADER)
-        and msg.removeprefix(b'\xF0' + consts.SYSEX_HEADER)[0] == consts.MSG_FROM_CLIENT
+        and (
+            msg.removeprefix(b'\xF0' + consts.SYSEX_HEADER)[0]
+            == consts.MSG_FROM_CLIENT
+        )
     ):
-        print("Prevent loopback")
         return None
 
     # Normal processing
