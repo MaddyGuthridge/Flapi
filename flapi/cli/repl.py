@@ -15,9 +15,9 @@ try:
     from IPython import start_ipython
     from traitlets.config.loader import Config as IPythonConfig
 except ImportError:
-    IPython = None
-    start_ipython = None
-    IPythonConfig = None
+    IPython = None  # type: ignore
+    start_ipython = None  # type: ignore
+    IPythonConfig = None  # type: ignore
 
 
 SHELL_SCOPE = {
