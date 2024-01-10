@@ -6,6 +6,7 @@ A simple program to run Flapi commands
 from argparse import ArgumentParser
 from .cli import install_main, shell_main, uninstall_main
 from pathlib import Path
+from typing import Optional, Any
 
 cli = ArgumentParser(
     description='CLI tool for the Flapi library',
@@ -13,13 +14,16 @@ cli = ArgumentParser(
 subparsers = cli.add_subparsers(dest="subcommand")
 
 
-def subcommand(args=[], parent=subparsers):
+def subcommand(args: Optional[list[Any]] = None, parent=subparsers):
     """
     A neat little decorator for reducing my immense confusion when dealing with
     the Argparse library
 
     Source: https://mike.depalatis.net/blog/simplifying-argparse.html
     """
+    if args is None:
+        args = []
+
     def decorator(func):
         parser = parent.add_parser(func.__name__, description=func.__doc__)
         for arg in args:
@@ -74,10 +78,18 @@ def uninstall(args):
     uninstall_main(args.data_dir, args.yes)
 
 
-@subcommand()
+@subcommand([
+    argument(
+        "-s",
+        "--shell",
+        type=str,
+        help="The shell to use with Flapi. Either 'ipython' or 'python'.",
+        default=None,
+    )
+])
 def shell(args):
     """Launch a shell connected to FL Studio"""
-    shell_main()
+    shell_main(args.shell)
 
 
 def main():
