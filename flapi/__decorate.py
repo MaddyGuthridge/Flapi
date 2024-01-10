@@ -6,7 +6,8 @@ Code for decorating the FL Studio API libraries to enable Flapi
 from types import FunctionType
 import inspect
 import importlib
-from typing import Callable, TypeVar, ParamSpec
+from typing import Callable, TypeVar
+from typing_extensions import ParamSpec
 from functools import wraps
 from .__comms import fl_eval
 from .__consts import FL_MODULES
