@@ -112,6 +112,8 @@ Processing of message raised an exception.
 MSG_STATUS_FAIL = 0x02
 """
 The message could not be processed
+
+The error message is attached in the remaining bytes.
 """
 
 DEVICE_ENQUIRY_MESSAGE = bytes([

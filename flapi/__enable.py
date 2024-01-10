@@ -9,9 +9,9 @@ from typing import Protocol, Generic, TypeVar
 from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
 from . import __consts as consts
 from .__context import setContext, popContext, FlapiContext
-from .__comms import poll_for_message, fl_exec, heartbeat
+from .__comms import poll_for_message, fl_exec, heartbeat, version_query
 from .__decorate import restore_original_functions, add_wrappers
-from .errors import FlapiPortError, FlapiConnectionError
+from .errors import FlapiPortError, FlapiConnectionError, FlapiVersionError
 
 
 T = TypeVar('T', BaseInput, BaseOutput, covariant=True)
@@ -111,9 +111,37 @@ def init():
             raise FlapiConnectionError(
                 "FL Studio did not connect to Flapi - is it running?")
 
+    # Make sure the versions are correct
+    version_check()
+
     # Finally, import all of the required modules in FL Studio
     for mod in consts.FL_MODULES:
         fl_exec(f"import {mod}")
+
+
+def version_check():
+    """
+    Ensure that the server version matches the client version.
+
+    If not, raise an exception.
+    """
+    server_version = version_query()
+    client_version = consts.VERSION
+
+    if server_version < client_version:
+        raise FlapiVersionError(
+            f"Server version {server_version} does not match client version "
+            f"{client_version}. Please update the server by running "
+            f"`flapi install`"
+        )
+    if client_version < server_version:
+        raise FlapiVersionError(
+            f"Server version {server_version} does not match client version "
+            f"{client_version}. Please update the client using your Python "
+            f"package manager. If you are using pip, run "
+            f"`pip install --upgrade flapi`."
+        )
+    # If we reach this point, the versions match
 
 
 def disable():

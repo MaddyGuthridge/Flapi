@@ -143,7 +143,7 @@ def fl_eval(expression: str):
         return respond_err(consts.MSG_TYPE_EXEC, e)
 
     # Operation was a success, give response
-    return respond_ok_with_data(consts.MSG_TYPE_EXEC, repr(result))
+    return respond_ok_with_data(consts.MSG_TYPE_EVAL, repr(result))
 
 
 def OnSysEx(event: FlMidiMsg):

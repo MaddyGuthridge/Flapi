@@ -42,6 +42,12 @@ class FlapiContextError(Exception):
         )
 
 
+class FlapiVersionError(Exception):
+    """
+    The version of the Flapi server doesn't match that of the Flapi client
+    """
+
+
 class FlapiInvalidMsgError(ValueError):
     """
     Flapi unexpectedly received a MIDI message that it could not process
