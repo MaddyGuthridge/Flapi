@@ -5,7 +5,7 @@ Code for initializing/closing Flapi
 """
 import mido  # type: ignore
 from time import sleep
-from typing import Protocol, Generic, TypeVar
+from typing import Protocol, Generic, TypeVar, Optional
 from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
 from . import __consts as consts
 from .__context import setContext, popContext, FlapiContext
@@ -23,7 +23,11 @@ class OpenPortFn(Protocol, Generic[T]):
         ...
 
 
-def open_port(port_name: str, port_names: list[str], open: OpenPortFn[T]) -> T:
+def open_port(
+    port_name: str,
+    port_names: list[str],
+    open: OpenPortFn[T],
+) -> Optional[T]:
     """
     Connect to a port which matches the given name, and if one cannot be found,
     attempt to create it
@@ -43,15 +47,8 @@ def open_port(port_name: str, port_names: list[str], open: OpenPortFn[T]) -> T:
         # Connect to it
         return open(name=curr_port_name)  # type: ignore
 
-    # If we reach this point, no match was found, attempt to create the port
-    try:
-        return open(  # type: ignore
-            name=port_name,
-            virtual=True,
-        )
-    except NotImplementedError as e:
-        # Port could not be opened
-        raise FlapiPortError(port_name) from e
+    # If we reach this point, no match was found
+    return None
 
 
 def enable(port_name: str = consts.DEFAULT_PORT_NAME) -> bool:
@@ -75,11 +72,23 @@ def enable(port_name: str = consts.DEFAULT_PORT_NAME) -> bool:
     req = open_port(
         port_name, mido.get_output_names(), mido.open_output)  # type: ignore
 
+    if res is None or req is None:
+        try:
+            port = mido.open_ioport(  # type: ignore
+                name=port_name,
+                virtual=True,
+            )
+        except NotImplementedError as e:
+            # Port could not be opened
+            raise FlapiPortError(port_name) from e
+    else:
+        port = IOPort(res, req)
+
     # Now decorate all of the API functions
     functions_backup = add_wrappers()
 
     # Register the context
-    setContext(FlapiContext(IOPort(res, req), functions_backup))
+    setContext(FlapiContext(port, functions_backup))
 
     try:
         init()
