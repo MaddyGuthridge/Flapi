@@ -9,7 +9,10 @@ from pathlib import Path
 from .util import yn_prompt, output_dir, get_fl_data_dir
 
 
-def uninstall_main(fl_data_dir: Optional[Path] = None):
+def uninstall_main(
+    fl_data_dir: Optional[Path] = None,
+    no_confirm: bool = False,
+):
     """
     Uninstall the Flapi server
     """
@@ -19,7 +22,7 @@ def uninstall_main(fl_data_dir: Optional[Path] = None):
     # Determine scripts folder location
     server_location = output_dir(fl_data_dir)
 
-    if not yn_prompt(
+    if not no_confirm and not yn_prompt(
         "Are you sure you want to uninstall Flapi server? y/[n] ",
         default=False,
     ):

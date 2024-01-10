@@ -55,15 +55,23 @@ def install(args):
     install_main(args.data_dir, args.force)
 
 
-@subcommand([argument(
-    "-d",
-    "--data-dir",
-    type=Path,
-    help="The location of the Image-Line data directory"
-)])
+@subcommand([
+    argument(
+        "-d",
+        "--data-dir",
+        type=Path,
+        help="The location of the Image-Line data directory"
+    ),
+    argument(
+        "-y",
+        "--yes",
+        action='store_true',
+        help="Proceed with uninstallation without confirmation"
+    ),
+])
 def uninstall(args):
     """Uninstall the Flapi server from FL Studio"""
-    uninstall_main(args.data_dir)
+    uninstall_main(args.data_dir, args.yes)
 
 
 @subcommand()
