@@ -5,25 +5,21 @@ Code for keeping track of the Flapi context, so that commands can be forwarded
 to the FL Studio API correctly.
 """
 from dataclasses import dataclass
-from mido.ports import BaseOutput, BaseInput
-from typing import Optional
+from mido.ports import BaseIOPort  # type: ignore
+from typing import Optional, TYPE_CHECKING
 from flapi.errors import FlapiContextError
-from flapi.__decorate import ApiCopyType
+if TYPE_CHECKING:
+    from flapi.__decorate import ApiCopyType
 
 
 @dataclass
 class FlapiContext:
-    outgoing_messages: BaseOutput
+    port: BaseIOPort
     """
-    The Mido port that Flapi uses to send messages to FL Studio
-    """
-
-    incoming_messages: BaseInput
-    """
-    The Mido port that Flapi uses to receive messages from FL Studio
+    The Mido port that Flapi uses to communicate with FL Studio
     """
 
-    functions_backup: ApiCopyType
+    functions_backup: 'ApiCopyType'
     """
     References to all the functions we replaced in the FL Studio API, so that
     we can set them back as required.

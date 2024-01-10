@@ -8,7 +8,7 @@ Code for communicating events to FL Studio.
 
 """
 import time
-from mido import Message as MidoMsg
+from mido import Message as MidoMsg  # type: ignore
 from typing import Any, Optional
 from .__context import getContext
 from . import __consts as consts
@@ -33,12 +33,19 @@ from .errors import FlapiTimeoutError, FlapiInvalidMsgError
 #         return FlMidiMsg(status, data1, data2)
 
 
+def bytes_to_str(msg: bytes) -> str:
+    """
+    Helper to give a nicer representation of bytes
+    """
+    return f"{repr([hex(i) for i in msg])} ({repr(msg)})"
+
+
 def send_msg(msg: bytes):
     """
     Send a message to FL Studio
     """
-    mido_msg = MidoMsg('sysex', data=msg)
-    getContext().outgoing_messages.send(mido_msg)
+    mido_msg = MidoMsg("sysex", data=msg)
+    getContext().port.send(mido_msg)
 
 
 def handle_received_message(msg: bytes) -> Optional[bytes]:
@@ -47,10 +54,20 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
     event we sent, it is returned. Otherwise, it is processed here, and `None`
     is returned instead.
     """
+
+    print([hex(b) for b in msg])
     # Handle universal device enquiry
     if msg == consts.DEVICE_ENQUIRY_MESSAGE:
         # Send the response
         send_msg(consts.DEVICE_ENQUIRY_RESPONSE)
+        return None
+
+    # Handle loopback (prevent us from receiving our own messages)
+    if (
+        msg.startswith(b'\xF0' + consts.SYSEX_HEADER)
+        and msg.removeprefix(b'\xF0' + consts.SYSEX_HEADER)[0] == consts.MSG_FROM_CLIENT
+    ):
+        print("Prevent loopback")
         return None
 
     # Normal processing
@@ -67,12 +84,28 @@ def ensure_message_is_flapi(msg: bytes) -> bytes:
     * `bytes`: remaining bytes in the sysex message (after the header)
     """
     # Also check the header
-    header = msg[:6]
+    header = msg[1:len(consts.SYSEX_HEADER) + 1]
     if header != consts.SYSEX_HEADER:
         raise FlapiInvalidMsgError(
-            f'Invalid message (sysex header not matched) {msg:?}'
+            f"Invalid message (sysex header not matched) {bytes_to_str(msg)}"
         )
-    return msg[6:]
+    # Trim to only include the relevant bits
+    return msg[len(consts.SYSEX_HEADER) + 1:-1]
+
+
+def poll_for_message() -> Optional[bytes]:
+    """
+    Poll for new MIDI messages from FL Studio
+    """
+    ctx = getContext()
+    if (msg := ctx.port.receive(block=False)) is not None:
+        # If there was a message, do pre-handling of message
+        msg = handle_received_message(bytes(msg.bytes()))
+        # If it is None, this message wasn't a response message, try to get
+        # another one just in case there is one
+        if msg is None:
+            return poll_for_message()
+    return msg
 
 
 def receive_message() -> bytes:
@@ -84,17 +117,12 @@ def receive_message() -> bytes:
     ## Raises
     * `TimeoutError`: a message was not received within the timeout window
     """
-    ctx = getContext()
     start_time = time.time()
 
     while time.time() < start_time + consts.TIMEOUT_DURATION:
         # Busy wait for a message
-        if (msg := ctx.incoming_messages.receive(block=False)) is not None:
-            # Do pre-handling of message
-            msg = handle_received_message(bytes(msg.bytes()))
-            # If it is None, this message wasn't a response message
-            if msg is not None:
-                return msg
+        if (msg := poll_for_message()) is not None:
+            return msg
 
     raise FlapiTimeoutError(
         "Flapi didn't receive a message within the timeout window. Is FL "
@@ -102,14 +130,28 @@ def receive_message() -> bytes:
     )
 
 
-def heartbeat():
+def heartbeat() -> bool:
     """
-    Send a heartbeat message to FL Studio, and assert that we receive another
+    Send a heartbeat message to FL Studio, and check whether we receive another
     heartbeat in response.
     """
-    send_msg(consts.SYSEX_HEADER + bytes([consts.MSG_TYPE_HEARTBEAT]))
-    response = ensure_message_is_flapi(receive_message())
-    assert response == bytes([consts.MSG_TYPE_HEARTBEAT])
+    try:
+        send_msg(consts.SYSEX_HEADER + bytes([
+            consts.MSG_FROM_CLIENT,
+            consts.MSG_TYPE_HEARTBEAT,
+        ]))
+        response = ensure_message_is_flapi(receive_message())
+        print([hex(b) for b in response])
+        print(response == bytes([
+            consts.MSG_FROM_SERVER,
+            consts.MSG_TYPE_HEARTBEAT,
+        ]))
+        return response == bytes([
+            consts.MSG_FROM_SERVER,
+            consts.MSG_TYPE_HEARTBEAT,
+        ])
+    except FlapiTimeoutError:
+        return False
 
 
 def fl_exec(code: str) -> None:
@@ -118,15 +160,15 @@ def fl_exec(code: str) -> None:
     """
     send_msg(
         consts.SYSEX_HEADER
-        + bytes([consts.MSG_TYPE_EXEC])
+        + bytes([consts.MSG_FROM_CLIENT, consts.MSG_TYPE_EXEC])
         + code.encode()
     )
     response = ensure_message_is_flapi(receive_message())
 
     # Check for errors
-    if response[0] == consts.MSG_STATUS_ERR:
+    if response[1] == consts.MSG_STATUS_ERR:
         # Eval the error and raise it
-        raise eval(response[1:])
+        raise eval(response[2:])
     # Otherwise, everything is fine
     return None
 
@@ -138,14 +180,14 @@ def fl_eval(expression: str) -> Any:
     """
     send_msg(
         consts.SYSEX_HEADER
-        + bytes([consts.MSG_TYPE_EXEC])
+        + bytes([consts.MSG_FROM_CLIENT, consts.MSG_TYPE_EVAL])
         + expression.encode()
     )
     response = ensure_message_is_flapi(receive_message())
 
     # Check for errors
-    if response[0] == consts.MSG_STATUS_ERR:
+    if response[2] == consts.MSG_STATUS_ERR:
         # Eval the error and raise it
-        raise eval(response[1:])
+        raise eval(response[2:])
     # Otherwise, eval the value and return it
-    return eval(response[1:])
+    return eval(response[2:])
