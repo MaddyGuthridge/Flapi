@@ -6,7 +6,7 @@ A simple program to run Flapi commands
 from argparse import ArgumentParser
 from .cli import install_main, repl_main, uninstall_main
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any
 
 cli = ArgumentParser(
     description='CLI tool for the Flapi library',
@@ -14,16 +14,13 @@ cli = ArgumentParser(
 subparsers = cli.add_subparsers(dest="subcommand")
 
 
-def subcommand(args: Optional[list[Any]] = None, parent=subparsers):
+def subcommand(*args: Any, parent=subparsers):
     """
     A neat little decorator for reducing my immense confusion when dealing with
     the Argparse library
 
     Source: https://mike.depalatis.net/blog/simplifying-argparse.html
     """
-    if args is None:
-        args = []
-
     def decorator(func):
         parser = parent.add_parser(func.__name__, description=func.__doc__)
         for arg in args:
@@ -40,7 +37,7 @@ def argument(*name_or_flags, **kwargs):
     return (list(name_or_flags), kwargs)
 
 
-@subcommand([
+@subcommand(
     argument(
         "-d",
         "--data-dir",
@@ -53,13 +50,13 @@ def argument(*name_or_flags, **kwargs):
         action='store_true',
         help="Always overwrite the server installation"
     ),
-])
+)
 def install(args):
     """Install the Flapi server to FL Studio"""
     install_main(args.data_dir, args.force)
 
 
-@subcommand([
+@subcommand(
     argument(
         "-d",
         "--data-dir",
@@ -72,24 +69,27 @@ def install(args):
         action='store_true',
         help="Proceed with uninstallation without confirmation"
     ),
-])
+)
 def uninstall(args):
     """Uninstall the Flapi server from FL Studio"""
     uninstall_main(args.data_dir, args.yes)
 
 
-@subcommand([
+@subcommand(
     argument(
         "-s",
         "--shell",
         type=str,
         help="The shell to use with Flapi. Either 'ipython' or 'python'.",
         default=None,
-    )
-])
+    ),
+)
 def repl(args):
     """Launch a Python REPL connected to FL Studio"""
     repl_main(args.shell)
+
+
+cli.set_defaults(subcommand='repl')
 
 
 def main():
