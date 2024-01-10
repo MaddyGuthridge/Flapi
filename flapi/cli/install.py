@@ -9,7 +9,7 @@ from pathlib import Path
 from .util import yn_prompt, get_fl_data_dir, output_dir, script_dir
 
 
-def install_main(fl_data_dir: Optional[Path] = None):
+def install_main(fl_data_dir: Optional[Path] = None, force: bool = False):
     """
     Install the Flapi server
     """
@@ -21,11 +21,13 @@ def install_main(fl_data_dir: Optional[Path] = None):
 
     if output_location.exists():
         print(f"Warning: output directory '{output_location}' exists!")
-        if not yn_prompt("Overwrite? y/[n] ", default=False):
-            print("Operation cancelled")
-            exit(1)
+        if force:
+            print("--force used, continuing")
         else:
-            rmtree(output_location)
+            if not yn_prompt("Overwrite? y/[n] ", default=False):
+                print("Operation cancelled")
+                exit(1)
+        rmtree(output_location)
 
     # Determine where we are, so we can locate the script folder
     script_location = script_dir()

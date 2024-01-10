@@ -36,15 +36,23 @@ def argument(*name_or_flags, **kwargs):
     return (list(name_or_flags), kwargs)
 
 
-@subcommand([argument(
-    "-d",
-    "--data-dir",
-    type=Path,
-    help="The location of the Image-Line data directory"
-)])
+@subcommand([
+    argument(
+        "-d",
+        "--data-dir",
+        type=Path,
+        help="The location of the Image-Line data directory"
+    ),
+    argument(
+        "-f",
+        "--force",
+        action='store_true',
+        help="Always overwrite the server installation"
+    ),
+])
 def install(args):
     """Install the Flapi server to FL Studio"""
-    install_main(args.data_dir)
+    install_main(args.data_dir, args.force)
 
 
 @subcommand([argument(
