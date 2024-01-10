@@ -6,6 +6,9 @@ authors = ["Miguel Guthridge <hdsq@outlook.com.au>"]
 license = "MIT"
 readme = "README.md"
 
+[tool.poetry.scripts]
+flapi = "flapi.__main__:main"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 fl-studio-api-stubs = ">=28.2.2"

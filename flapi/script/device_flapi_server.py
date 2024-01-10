@@ -1,5 +1,5 @@
 # name=Flapi Server
-# supportedDevices=Flapi request,Flapi response
+# supportedDevices=Flapi
 import device
 import __consts as consts
 try:
