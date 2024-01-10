@@ -17,11 +17,13 @@ $ flapi
 2. Install the Flapi server to FL Studio by running `flapi install`. If you
    have changed your FL Studio user data folder, you will need to enter it.
 
-On Windows, install a virtual MIDI loopback tool such as
-[loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) and use it to
-create a virtual MIDI port named `Flapi`.
+3. On Windows, install a virtual MIDI loopback tool such as
+   [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) and use it
+   to create a virtual MIDI port named `Flapi`. On MacOS, Flapi is able to
+   create this MIDI port automatically, so this step is not required.
 
-On MacOS, Flapi is able to create this MIDI port automatically.
+4. Start or restart FL Studio. The server should be loaded automatically, but
+   if not, you may need to set it up in FL Studio's MIDI settings.
 
 ## Credits
 
