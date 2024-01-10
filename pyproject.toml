@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flapi"
-version = "0.1.0"
+version = "0.2.0"
 description = "Remotely control FL Studio using the MIDI Controller Scripting API"
 authors = ["Miguel Guthridge <hello@miguelguthridge.com>"]
 license = "MIT"
