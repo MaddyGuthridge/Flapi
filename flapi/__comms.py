@@ -36,8 +36,6 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
     event we sent, it is returned. Otherwise, it is processed here, and `None`
     is returned instead.
     """
-
-    print([hex(b) for b in msg])
     # Handle universal device enquiry
     if msg == consts.DEVICE_ENQUIRY_MESSAGE:
         # Send the response
@@ -125,11 +123,6 @@ def heartbeat() -> bool:
             consts.MSG_TYPE_HEARTBEAT,
         ]))
         response = ensure_message_is_flapi(receive_message())
-        print([hex(b) for b in response])
-        print(response == bytes([
-            consts.MSG_FROM_SERVER,
-            consts.MSG_TYPE_HEARTBEAT,
-        ]))
         return response == bytes([
             consts.MSG_FROM_SERVER,
             consts.MSG_TYPE_HEARTBEAT,

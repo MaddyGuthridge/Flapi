@@ -54,11 +54,20 @@ def open_port(port_name: str, port_names: list[str], open: OpenPortFn[T]) -> T:
         raise FlapiPortError(port_name) from e
 
 
-def enable(port_name: str = consts.DEFAULT_PORT_NAME):
+def enable(port_name: str = consts.DEFAULT_PORT_NAME) -> bool:
     """
     Enable Flapi, connecting it to the given MIDI ports
 
     1. Attempt to connect to the port names provided
+    2. Decorate the API functions
+    3. Attempt to initialize the connection by running setup commands in FL
+       Studio.
+
+    ## Returns:
+
+    * `bool`: whether the initialization was a success. If this is `False`, you
+      will need to call `init()` once FL Studio is running and configured
+      correctly.
     """
     # First, connect to all the MIDI ports
     res = open_port(
@@ -72,10 +81,19 @@ def enable(port_name: str = consts.DEFAULT_PORT_NAME):
     # Register the context
     setContext(FlapiContext(IOPort(res, req), functions_backup))
 
+    try:
+        init()
+    except FlapiConnectionError:
+        return False
+    return True
+
 
 def init():
     """
-    Initialize Flapi, so that it can send commands to FL Studio
+    Initialize Flapi, so that it can send commands to FL Studio.
+
+    1. Check the connection by sending a heartbeat message.
+    2. Import all required modules in FL Studio.
     """
     # Attempt to send a heartbeat message - if we get a response, we're already
     # connected, but otherwise, we should wait a second, since FL Studio might

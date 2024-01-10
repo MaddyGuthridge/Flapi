@@ -5,6 +5,7 @@ A simple program to run Flapi commands
 """
 from argparse import ArgumentParser
 from .install import install as install_main
+from .shell import shell as shell_main
 from pathlib import Path
 
 cli = ArgumentParser(
@@ -46,10 +47,15 @@ def install(args):
     install_main(args.data_dir)
 
 
+@subcommand()
+def shell(args):
+    shell_main()
+
+
 def main():
     args = cli.parse_args()
     if args.subcommand is None:
-        cli.print_help()
+        shell_main()
     else:
         args.func(args)
 
