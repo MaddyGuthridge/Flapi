@@ -1,19 +1,65 @@
 # name=Flapi Server
 # supportedDevices=Flapi
 import device
+import sys
 import __consts as consts
 try:
     from fl_classes import FlMidiMsg
 except ImportError:
     pass
+try:
+    # This is the module in most Python installs, used for type safety
+    from io import StringIO
+except ImportError:
+    # This is the module in FL Studio for some reason
+    from _io import StringIO  # type: ignore
+
+
+def init_fake_stdout():
+    """
+    Initialize a fake buffer for stdout
+    """
+    global fake_stdout
+    fake_stdout = StringIO()
+    sys.stdout = fake_stdout
+
+
+real_stdout = sys.stdout
+fake_stdout = StringIO()
+init_fake_stdout()
+
+
+def display_stdout():
+    """
+    Display the contents of stdout in FL Studio's console, then clear the
+    buffer
+    """
+    fake_stdout.seek(0)
+    print(fake_stdout.read(), file=real_stdout)
+    init_fake_stdout()
+
+
+def send_stdout():
+    """
+    Send the contents of stdout to the client's console, then clear the buffer
+    """
+    fake_stdout.seek(0)
+    text = fake_stdout.read()
+    send_ok_with_data(consts.MSG_TYPE_STDOUT, text)
+    init_fake_stdout()
 
 
 def OnInit():
-    print("Flapi server")
-    print(f"Server version: {'.'.join(str(n) for n in consts.VERSION)}")
-    print(f"Device name: {device.getName()}")
-    print(f"Device assigned: {bool(device.isAssigned())}")
-    print(f"FL Studio port number: {device.getPortNumber()}")
+    print(
+        "\n".join([
+            "Flapi server",
+            f"Server version: {'.'.join(str(n) for n in consts.VERSION)}",
+            f"Device name: {device.getName()}",
+            f"Device assigned: {bool(device.isAssigned())}",
+            f"FL Studio port number: {device.getPortNumber()}",
+        ]),
+        file=real_stdout,
+    )
 
 
 def bytes_to_str(msg: bytes) -> str:
@@ -23,7 +69,7 @@ def bytes_to_str(msg: bytes) -> str:
     return f"{repr([hex(i) for i in msg])} ({repr(msg)})"
 
 
-def respond_ok(msg_type: int):
+def send_ok(msg_type: int):
     """
     Respond to a message with an OK status
     """
@@ -39,7 +85,7 @@ def respond_ok(msg_type: int):
     )
 
 
-def respond_ok_with_data(msg_type: int, data: 'str | bytes'):
+def send_ok_with_data(msg_type: int, data: 'str | bytes'):
     """
     Respond to a message with an OK status, additionally attaching the given
     data.
@@ -60,7 +106,7 @@ def respond_ok_with_data(msg_type: int, data: 'str | bytes'):
     )
 
 
-def respond_err(msg_type: int, error: Exception):
+def send_err(msg_type: int, error: Exception):
     """
     Respond to a message with an ERR status
     """
@@ -77,7 +123,7 @@ def respond_err(msg_type: int, error: Exception):
     )
 
 
-def respond_fail(msg_type: int, message: str):
+def send_fail(msg_type: int, message: str):
     """
     Respond to a message with a FAIL status
     """
@@ -98,14 +144,14 @@ def heartbeat():
     """
     Received a heartbeat message
     """
-    return respond_ok(consts.MSG_TYPE_HEARTBEAT)
+    return send_ok(consts.MSG_TYPE_HEARTBEAT)
 
 
 def version_query():
     """
     Return the version of the Flapi server
     """
-    return respond_ok_with_data(
+    return send_ok_with_data(
         consts.MSG_TYPE_VERSION_QUERY,
         bytes(consts.VERSION),
     )
@@ -120,10 +166,11 @@ def fl_exec(code: str):
         exec(code, globals())
     except Exception as e:
         # Something went wrong, give the error
-        return respond_err(consts.MSG_TYPE_EXEC, e)
+        return send_err(consts.MSG_TYPE_EXEC, e)
 
     # Operation was a success, give response
-    return respond_ok(consts.MSG_TYPE_EXEC)
+    send_stdout()
+    return send_ok(consts.MSG_TYPE_EXEC)
 
 
 def fl_eval(expression: str):
@@ -135,10 +182,18 @@ def fl_eval(expression: str):
         result = eval(expression, globals())
     except Exception as e:
         # Something went wrong, give the error
-        return respond_err(consts.MSG_TYPE_EXEC, e)
+        return send_err(consts.MSG_TYPE_EVAL, e)
 
     # Operation was a success, give response
-    return respond_ok_with_data(consts.MSG_TYPE_EVAL, repr(result))
+    send_stdout()
+    return send_ok_with_data(consts.MSG_TYPE_EVAL, repr(result))
+
+
+def receive_stdout(text: str):
+    """
+    Receive text from client, and display it in FL Studio's console
+    """
+    print(text, end='', file=real_stdout)
 
 
 def OnSysEx(event: 'FlMidiMsg'):
@@ -168,4 +223,7 @@ def OnSysEx(event: 'FlMidiMsg'):
     if message_type == consts.MSG_TYPE_EVAL:
         return fl_eval(data[2:].decode())
 
-    respond_fail(message_type, f"Unknown message type {message_type}")
+    if message_type == consts.MSG_TYPE_STDOUT:
+        return receive_stdout(data[2:].decode())
+
+    send_fail(message_type, f"Unknown message type {message_type}")

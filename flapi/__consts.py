@@ -99,6 +99,11 @@ if status is MSG_STATUS_ERR, the `repr()` of the exception is encoded.
 Otherwise, the `repr()` of the return value is encoded.
 """
 
+MSG_TYPE_STDOUT = 0x04
+"""
+Message contains text to write into stdout
+"""
+
 MSG_STATUS_OK = 0x00
 """
 Message was processed correctly.

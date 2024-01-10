@@ -4,7 +4,7 @@
 A simple program to run Flapi commands
 """
 import click
-from click_default_group import DefaultGroup
+from click_default_group import DefaultGroup  # type: ignore
 from .cli import install_main, repl_main, uninstall_main
 from .cli import consts
 from pathlib import Path

@@ -70,6 +70,10 @@ def send_msg(msg: bytes):
     getContext().port.send(mido_msg)
 
 
+def handle_stdout(output: bytes):
+    print(output.decode(), end='')
+
+
 def handle_received_message(msg: bytes) -> Optional[bytes]:
     """
     Handling of some received MIDI messages. If the event is a response to an
@@ -91,6 +95,11 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
         msg.startswith(consts.SYSEX_HEADER)
         and msg.removeprefix(consts.SYSEX_HEADER)[0] == consts.MSG_FROM_CLIENT
     ):
+        return None
+
+    # Handle FL Studio stdout
+    if msg.removeprefix(consts.SYSEX_HEADER)[1] == consts.MSG_TYPE_STDOUT:
+        handle_stdout(msg.removeprefix(consts.SYSEX_HEADER)[3:])
         return None
 
     # Normal processing
@@ -227,3 +236,14 @@ def fl_eval(expression: str) -> Any:
 
     # Value is ok, eval and return it
     return eval(response[2:])
+
+
+def fl_print(text: str):
+    """
+    Print the given text to FL Studio's Python console.
+    """
+    send_msg(
+        consts.SYSEX_HEADER
+        + bytes([consts.MSG_FROM_CLIENT, consts.MSG_TYPE_STDOUT])
+        + text.encode()
+    )

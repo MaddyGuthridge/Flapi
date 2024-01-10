@@ -8,7 +8,7 @@ import sys
 import code
 from typing import Optional
 from traceback import print_exception
-from flapi import enable, init, disable, heartbeat, fl_exec, fl_eval
+from flapi import enable, init, disable, heartbeat, fl_exec, fl_eval, fl_print
 import flapi
 try:
     import IPython
@@ -27,10 +27,11 @@ SHELL_SCOPE = {
     "heartbeat": heartbeat,
     "fl_exec": fl_exec,
     "fl_eval": fl_eval,
+    "fl_print": fl_print,
 }
 
 
-def exec_lines(lines: list[str]):
+def exec_lines(lines: list[str], is_statement: bool):
     """
     Execute the given lines on the server
     """
@@ -38,7 +39,11 @@ def exec_lines(lines: list[str]):
     if code == "exit":
         exit()
     try:
-        fl_exec(code)
+        if is_statement:
+            fl_exec(code)
+        else:
+            res = fl_eval(code)
+            print(repr(res))
     except Exception as e:
         print_exception(e)
 
@@ -46,10 +51,13 @@ def exec_lines(lines: list[str]):
 def start_server_shell():
     """
     A simple REPL where all code is run server-side
+
+    Note: this is very very buggy and probably shouldn't be relied upon.
     """
     print("Type `exit` to quit")
 
     lines = []
+    is_statement = False
     is_indented = False
     curr_prompt = ">>> "
 
@@ -60,18 +68,20 @@ def start_server_shell():
         # If we're not indented, check if the next line will be
         if line.strip().endswith(":"):
             is_indented = True
+            is_statement = True
 
         # If we are indented, only an empty line can end the statement
         if is_indented:
             if line == "":
-                exec_lines(lines)
+                exec_lines(lines, is_statement)
                 lines = []
                 is_indented = False
+                is_statement = False
                 curr_prompt = ">>> "
             else:
                 curr_prompt = "... "
         else:
-            exec_lines(lines)
+            exec_lines(lines, is_statement)
             lines = []
             curr_prompt = ">>> "
 
