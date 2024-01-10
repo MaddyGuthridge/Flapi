@@ -31,11 +31,29 @@ SHELL_SCOPE = {
 }
 
 
-def exec_lines(lines: list[str], is_statement: bool):
+STATEMENT_KEYWORDS = [
+    "def",
+    "class",
+    "import",
+    "if",
+    "assert",
+    "try",
+    "pass",
+    "raise",
+    "with",
+    "global",
+]
+
+
+def exec_lines(lines: list[str]):
     """
     Execute the given lines on the server
     """
     code = "\n".join(lines)
+
+    # If it's a keyword, we'll assume this is a statement
+    is_statement = code.split(" ")[0].replace(":", "") in STATEMENT_KEYWORDS
+
     if code == "exit":
         exit()
     try:
@@ -57,7 +75,6 @@ def start_server_shell():
     print("Type `exit` to quit")
 
     lines = []
-    is_statement = False
     is_indented = False
     curr_prompt = ">>> "
 
@@ -68,20 +85,18 @@ def start_server_shell():
         # If we're not indented, check if the next line will be
         if line.strip().endswith(":"):
             is_indented = True
-            is_statement = True
 
         # If we are indented, only an empty line can end the statement
         if is_indented:
             if line == "":
-                exec_lines(lines, is_statement)
+                exec_lines(lines)
                 lines = []
                 is_indented = False
-                is_statement = False
                 curr_prompt = ">>> "
             else:
                 curr_prompt = "... "
         else:
-            exec_lines(lines, is_statement)
+            exec_lines(lines)
             lines = []
             curr_prompt = ">>> "
 
