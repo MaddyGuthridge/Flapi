@@ -5,12 +5,11 @@ A simple shell to interact with FL Studio
 """
 import sys
 import code
-from .__enable import enable, init, disable
-from .__comms import heartbeat, fl_exec, fl_eval
-from . import __consts as consts
+from flapi import enable, init, disable, heartbeat, fl_exec, fl_eval
+from flapi import __consts as consts
 
 
-def shell():
+def shell_main():
     """Main function to set up the Python shell"""
     print("Flapi interactive shell")
     print(

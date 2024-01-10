@@ -4,8 +4,7 @@
 A simple program to run Flapi commands
 """
 from argparse import ArgumentParser
-from .install import install as install_main
-from .shell import shell as shell_main
+from .cli import install_main, shell_main, uninstall_main
 from pathlib import Path
 
 cli = ArgumentParser(
@@ -44,11 +43,24 @@ def argument(*name_or_flags, **kwargs):
     help="The location of the Image-Line data directory"
 )])
 def install(args):
+    """Install the Flapi server to FL Studio"""
     install_main(args.data_dir)
+
+
+@subcommand([argument(
+    "-d",
+    "--data-dir",
+    type=Path,
+    help="The location of the Image-Line data directory"
+)])
+def uninstall(args):
+    """Uninstall the Flapi server from FL Studio"""
+    uninstall_main(args.data_dir)
 
 
 @subcommand()
 def shell(args):
+    """Launch a shell connected to FL Studio"""
     shell_main()
 
 
