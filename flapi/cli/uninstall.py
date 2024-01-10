@@ -3,22 +3,18 @@
 
 Simple script for removing the Flapi server FL Studio
 """
-from typing import Optional
 from shutil import rmtree
 from pathlib import Path
-from .util import yn_prompt, output_dir, get_fl_data_dir
+from .util import yn_prompt, output_dir
 
 
 def uninstall_main(
-    fl_data_dir: Optional[Path] = None,
+    fl_data_dir: Path,
     no_confirm: bool = False,
 ):
     """
     Uninstall the Flapi server
     """
-    if fl_data_dir is None:
-        fl_data_dir = get_fl_data_dir()
-
     # Determine scripts folder location
     server_location = output_dir(fl_data_dir)
 

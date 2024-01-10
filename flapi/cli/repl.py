@@ -8,7 +8,7 @@ import sys
 import code
 from typing import Optional
 from flapi import enable, init, disable, heartbeat, fl_exec, fl_eval
-from flapi import __consts as consts
+import flapi
 try:
     import IPython
     from IPython import start_ipython
@@ -55,7 +55,7 @@ def start_ipython_shell():
 def repl_main(shell_to_use: Optional[str] = None):
     """Main function to set up the Python shell"""
     print("Flapi interactive shell")
-    print(f"Client version: {'.'.join(str(n) for n in consts.VERSION)}")
+    print(f"Client version: {flapi.__version__}")
     print(f"Python version: {sys.version}")
 
     # Set up the connection

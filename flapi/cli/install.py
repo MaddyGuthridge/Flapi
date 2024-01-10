@@ -3,19 +3,15 @@
 
 Simple script for installing the Flapi server into FL Studio
 """
-from typing import Optional
 from shutil import copytree, rmtree
 from pathlib import Path
-from .util import yn_prompt, get_fl_data_dir, output_dir, script_dir
+from .util import yn_prompt, output_dir, script_dir
 
 
-def install_main(fl_data_dir: Optional[Path] = None, force: bool = False):
+def install_main(fl_data_dir: Path, force: bool = False):
     """
     Install the Flapi server
     """
-    if fl_data_dir is None:
-        fl_data_dir = get_fl_data_dir()
-
     # Determine scripts folder location
     output_location = output_dir(fl_data_dir)
 
@@ -24,7 +20,7 @@ def install_main(fl_data_dir: Optional[Path] = None, force: bool = False):
         if force:
             print("--force used, continuing")
         else:
-            if not yn_prompt("Overwrite? y/[n] ", default=False):
+            if not yn_prompt("Overwrite (y/[n])? ", default=False):
                 print("Operation cancelled")
                 exit(1)
         rmtree(output_location)
@@ -38,7 +34,3 @@ def install_main(fl_data_dir: Optional[Path] = None, force: bool = False):
     print(
         "Success! Make sure you restart FL Studio so the server is registered"
     )
-
-
-if __name__ == '__main__':
-    install_main()

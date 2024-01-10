@@ -3,7 +3,6 @@
 
 Helper functions for CLI
 """
-import os
 from typing import Optional
 from pathlib import Path
 
@@ -22,23 +21,6 @@ def yn_prompt(prompt: str, default: Optional[bool] = None) -> bool:
             return default
         else:
             print("Invalid response")
-
-
-def get_fl_data_dir() -> Path:
-    """
-    Prompt for the location of the FL Studio user data directory
-    """
-    fl_data_dir = Path(os.path.expanduser("~/Documents/Image-Line"))
-
-    if not yn_prompt(
-        f"Is your FL Studio user data folder {fl_data_dir}? [y]/n: ",
-        default=True,
-    ):
-        response = input(
-            "Enter your FL Studio user data path (~ for home directory): ")
-        fl_data_dir = Path(os.path.expanduser(response))
-
-    return fl_data_dir
 
 
 def output_dir(data_dir: Path) -> Path:
