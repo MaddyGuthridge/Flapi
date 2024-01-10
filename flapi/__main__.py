@@ -61,7 +61,7 @@ def uninstall(data_dir: Path, yes: bool):
 @click.option(
     '-s',
     '--shell',
-    type=click.Choice(["ipython", "python"], case_sensitive=False),
+    type=click.Choice(["ipython", "python", "server"], case_sensitive=False),
     help="The shell to use with Flapi.",
     default=None,
 )

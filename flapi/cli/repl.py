@@ -7,6 +7,7 @@ or Python's integrated shell.
 import sys
 import code
 from typing import Optional
+from traceback import print_exception
 from flapi import enable, init, disable, heartbeat, fl_exec, fl_eval
 import flapi
 try:
@@ -27,6 +28,52 @@ SHELL_SCOPE = {
     "fl_exec": fl_exec,
     "fl_eval": fl_eval,
 }
+
+
+def exec_lines(lines: list[str]):
+    """
+    Execute the given lines on the server
+    """
+    code = "\n".join(lines)
+    if code == "exit":
+        exit()
+    try:
+        fl_exec(code)
+    except Exception as e:
+        print_exception(e)
+
+
+def start_server_shell():
+    """
+    A simple REPL where all code is run server-side
+    """
+    print("Type `exit` to quit")
+
+    lines = []
+    is_indented = False
+    curr_prompt = ">>> "
+
+    while True:
+        line = input(curr_prompt)
+        lines.append(line)
+
+        # If we're not indented, check if the next line will be
+        if line.strip().endswith(":"):
+            is_indented = True
+
+        # If we are indented, only an empty line can end the statement
+        if is_indented:
+            if line == "":
+                exec_lines(lines)
+                lines = []
+                is_indented = False
+                curr_prompt = ">>> "
+            else:
+                curr_prompt = "... "
+        else:
+            exec_lines(lines)
+            lines = []
+            curr_prompt = ">>> "
 
 
 def start_python_shell():
@@ -60,6 +107,19 @@ def repl_main(shell_to_use: Optional[str] = None):
 
     # Set up the connection
     status = enable()
+
+    if shell_to_use == "server":
+        if status:
+            print("Connected to FL Studio")
+            start_server_shell()
+        else:
+            print("Flapi could not connect to FL Studio.")
+            print(
+                "Please verify that FL Studio is running and the server is "
+                "installed"
+            )
+            print("Then, run this command again.")
+            exit(1)
 
     if status:
         print("Connected to FL Studio")
