@@ -7,7 +7,7 @@ or Python's integrated shell.
 import sys
 import code
 from typing import Optional
-from traceback import print_exception
+from traceback import print_exc
 from flapi import enable, init, disable, heartbeat, fl_exec, fl_eval, fl_print
 import flapi
 try:
@@ -62,8 +62,8 @@ def exec_lines(lines: list[str]):
         else:
             res = fl_eval(code)
             print(repr(res))
-    except Exception as e:
-        print_exception(e)
+    except Exception:
+        print_exc()
 
 
 def start_server_shell():
