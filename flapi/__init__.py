@@ -6,6 +6,11 @@ Remotely control FL Studio using the MIDI Controller Scripting API.
 from .__enable import enable, init, disable
 from .__comms import heartbeat, fl_exec, fl_eval
 from . import errors
+from .__consts import VERSION
+
+
+__version__ = ".".join(str(n) for n in VERSION)
+del VERSION
 
 
 __all__ = [

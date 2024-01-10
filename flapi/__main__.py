@@ -3,102 +3,72 @@
 
 A simple program to run Flapi commands
 """
-from argparse import ArgumentParser
+import click
+from click_default_group import DefaultGroup
 from .cli import install_main, repl_main, uninstall_main
+from .cli import consts
 from pathlib import Path
-from typing import Any
+from typing import Optional
 
-cli = ArgumentParser(
-    description='CLI tool for the Flapi library',
+
+@click.group(cls=DefaultGroup, default='repl', default_if_no_args=True)
+@click.version_option(package_name='flapi')
+def cli():
+    pass
+
+
+@cli.command()
+@click.option(
+    "-d",
+    "--data-dir",
+    default=consts.DEFAULT_IL_DATA_DIR,
+    type=Path,
+    prompt=True,
+    help="The location of the Image-Line data directory"
 )
-subparsers = cli.add_subparsers(dest="subcommand")
-
-
-def subcommand(*args: Any, parent=subparsers):
-    """
-    A neat little decorator for reducing my immense confusion when dealing with
-    the Argparse library
-
-    Source: https://mike.depalatis.net/blog/simplifying-argparse.html
-    """
-    def decorator(func):
-        parser = parent.add_parser(func.__name__, description=func.__doc__)
-        for arg in args:
-            parser.add_argument(*arg[0], **arg[1])
-        parser.set_defaults(func=func)
-    return decorator
-
-
-def argument(*name_or_flags, **kwargs):
-    """
-    Convenience function to properly format arguments to pass to the
-    subcommand decorator.
-    """
-    return (list(name_or_flags), kwargs)
-
-
-@subcommand(
-    argument(
-        "-d",
-        "--data-dir",
-        type=Path,
-        help="The location of the Image-Line data directory"
-    ),
-    argument(
-        "-f",
-        "--force",
-        action='store_true',
-        help="Always overwrite the server installation"
-    ),
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    help="Always overwrite the server installation"
 )
-def install(args):
+def install(data_dir: Path, force: bool):
     """Install the Flapi server to FL Studio"""
-    install_main(args.data_dir, args.force)
+    install_main(data_dir, force)
 
 
-@subcommand(
-    argument(
-        "-d",
-        "--data-dir",
-        type=Path,
-        help="The location of the Image-Line data directory"
-    ),
-    argument(
-        "-y",
-        "--yes",
-        action='store_true',
-        help="Proceed with uninstallation without confirmation"
-    ),
+@cli.command()
+@click.option(
+    "-d",
+    "--data-dir",
+    default=consts.DEFAULT_IL_DATA_DIR,
+    type=Path,
+    prompt=True,
+    help="The location of the Image-Line data directory"
 )
-def uninstall(args):
+@click.option(
+    "-y",
+    "--yes",
+    is_flag=True,
+    help="Proceed with uninstallation without confirmation"
+)
+def uninstall(data_dir: Path, yes: bool):
     """Uninstall the Flapi server from FL Studio"""
-    uninstall_main(args.data_dir, args.yes)
+    uninstall_main(data_dir, yes)
 
 
-@subcommand(
-    argument(
-        "-s",
-        "--shell",
-        type=str,
-        help="The shell to use with Flapi. Either 'ipython' or 'python'.",
-        default=None,
-    ),
+@cli.command()
+@click.option(
+    '-s',
+    '--shell',
+    type=click.Choice(["ipython", "python"], case_sensitive=False),
+    help="The shell to use with Flapi.",
+    default=None,
 )
-def repl(args):
+def repl(shell: Optional[str]):
     """Launch a Python REPL connected to FL Studio"""
-    repl_main(args.shell)
-
-
-cli.set_defaults(subcommand='repl')
-
-
-def main():
-    args = cli.parse_args()
-    if args.subcommand is None:
-        repl_main()
-    else:
-        args.func(args)
+    repl_main(shell)
 
 
 if __name__ == '__main__':
-    main()
+    cli()
