@@ -3,14 +3,9 @@
 import device
 import __consts as consts
 try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-try:
     from fl_classes import FlMidiMsg
 except ImportError:
-    assert not TYPE_CHECKING
-    FlMidiMsg = 'FlMidiMsg'
+    pass
 
 
 def OnInit():
@@ -146,7 +141,7 @@ def fl_eval(expression: str):
     return respond_ok_with_data(consts.MSG_TYPE_EVAL, repr(result))
 
 
-def OnSysEx(event: FlMidiMsg):
+def OnSysEx(event: 'FlMidiMsg'):
     header = event.sysex[1:7]  # Sysex header
     data = event.sysex[7:-1]  # Any remaining sysex data
 

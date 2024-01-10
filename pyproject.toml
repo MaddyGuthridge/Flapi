@@ -2,12 +2,51 @@
 name = "flapi"
 version = "0.1.0"
 description = "Remotely control FL Studio using the MIDI Controller Scripting API"
-authors = ["Miguel Guthridge <hdsq@outlook.com.au>"]
+authors = ["Miguel Guthridge <hello@miguelguthridge.com>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/MiguelGuthridge/Flapi"
+
+keywords = [
+    "fl",
+    "studio",
+    "fl studio",
+    "midi",
+    "script",
+    "midi controller scripting",
+    "remote",
+    "remote control",
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS :: MacOS X",
+    "Development Status :: 4 - Beta",
+    "Environment :: Other Environment",
+    "Typing :: Typed",
+]
+
+include = ["py.typed"]
+
+
+packages = [
+    { include = "flapi" }
+]
+
+[tool.poetry.urls]
+"Online Documentation" = "https://miguelguthridge.github.io/Flapi"
+"Bug Tracker" = "https://github.com/MiguelGuthridge/Flapi/issues"
 
 [tool.poetry.scripts]
 flapi = "flapi.__main__:main"
+
+[tool.mypy]
+exclude = [
+    'flapi/script/*',
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
