@@ -4,7 +4,7 @@
 A simple program to run Flapi commands
 """
 from argparse import ArgumentParser
-from .cli import install_main, shell_main, uninstall_main
+from .cli import install_main, repl_main, uninstall_main
 from pathlib import Path
 from typing import Optional, Any
 
@@ -87,15 +87,15 @@ def uninstall(args):
         default=None,
     )
 ])
-def shell(args):
-    """Launch a shell connected to FL Studio"""
-    shell_main(args.shell)
+def repl(args):
+    """Launch a Python REPL connected to FL Studio"""
+    repl_main(args.shell)
 
 
 def main():
     args = cli.parse_args()
     if args.subcommand is None:
-        shell_main()
+        repl_main()
     else:
         args.func(args)
 

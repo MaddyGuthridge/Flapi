@@ -1,7 +1,8 @@
 """
-# Flapi > Shell
+# Flapi > REPL
 
-A simple shell to interact with FL Studio
+Starts a simple REPL to interact with FL Studio, using IPython (if available)
+or Python's integrated shell.
 """
 import sys
 import code
@@ -51,7 +52,7 @@ def start_ipython_shell():
     start_ipython(argv=[], user_ns=SHELL_SCOPE, config=config)
 
 
-def shell_main(shell_to_use: Optional[str] = None):
+def repl_main(shell_to_use: Optional[str] = None):
     """Main function to set up the Python shell"""
     print("Flapi interactive shell")
     print(f"Client version: {'.'.join(str(n) for n in consts.VERSION)}")
