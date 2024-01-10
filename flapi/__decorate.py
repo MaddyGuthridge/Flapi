@@ -9,25 +9,13 @@ import importlib
 from typing import Callable, TypeVar, ParamSpec
 from functools import wraps
 from .__comms import fl_eval
+from .__consts import FL_MODULES
 
 P = ParamSpec('P')
 R = TypeVar('R')
 
 
 ApiCopyType = dict[str, dict[str, FunctionType]]
-
-
-FL_MODULES = [
-    "playlist",
-    "channels",
-    "mixer",
-    "patterns",
-    "arrangement",
-    "ui",
-    "transport",
-    "plugins",
-    "general",
-]
 
 
 def decorate(
@@ -41,10 +29,16 @@ def decorate(
     """
     @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        args_str = ', '.join(repr(a) for a in args)
-        kwargs_str = ', '.join(f"{k}={repr(v)}" for k, v in kwargs.items())
+        args_str = ", ".join(repr(a) for a in args)
+        kwargs_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())
 
-        return fl_eval(f"{module}.{func_name}({args_str}, {kwargs_str})")
+        # Overall parameters string (avoid invalid syntax by removing extra
+        # commas)
+        params = f"{args_str}, {kwargs_str}"\
+            .removeprefix(", ")\
+            .removesuffix(", ")
+
+        return fl_eval(f"{module}.{func_name}({params})")
 
     return wrapper
 
