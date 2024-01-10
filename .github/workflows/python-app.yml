@@ -22,7 +22,7 @@ jobs:
         path: ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - run: poetry --version
-    - run: poetry install
+    - run: poetry install --all-extras
     - name: Lint with flake8
       run: |
         poetry run flake8
@@ -43,7 +43,7 @@ jobs:
         path: ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - run: poetry --version
-    - run: poetry install
+    - run: poetry install --all-extras
     - name: Lint with mypy
       run: |
         poetry run mypy .

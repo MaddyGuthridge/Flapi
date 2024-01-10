@@ -23,6 +23,6 @@ jobs:
           path: ~/.cache/pypoetry/virtualenvs
           key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
       - run: poetry --version
-      - run: poetry install
+      - run: poetry install --all-extras
       - name: Build and publish package
         run: poetry publish --build -u __token__ -p ${{ secrets.PYPI_API_TOKEN }}
