@@ -10,7 +10,7 @@ except ImportError:
 
 def OnInit():
     print("Flapi server")
-    print(f"v{'.'.join(str(n) for n in consts.VERSION)}")
+    print(f"Server version: {'.'.join(str(n) for n in consts.VERSION)}")
     print(f"Device name: {device.getName()}")
     print(f"Device assigned: {bool(device.isAssigned())}")
     print(f"FL Studio port number: {device.getPortNumber()}")

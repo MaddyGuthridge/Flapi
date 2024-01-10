@@ -2,23 +2,26 @@
 
 Remotely control FL Studio using the MIDI Controller Scripting API
 
+```py
+$ flapi
+>>> import ui
+>>> ui.setHintMsg("Hello from Flapi!")
+# Hint message "Hello from Flapi!" is displayed in FL Studio
+```
+
 ## Setup
 
-TODO: Document this
+1. Install the Flapi library using Pip, or any package manager of your choice.
+   `pip install flapi`
 
-## Todo
+2. Install the Flapi server to FL Studio by running `flapi install`. If you
+   have changed your FL Studio user data folder, you will need to enter it.
 
-This project is currently not in a functional state. Before the first release I
-will.
+On Windows, install a virtual MIDI loopback tool such as
+[loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) and use it to
+create a virtual MIDI port named `Flapi`.
 
-- [ ] Tidy up code to make it more readable
-- [ ] Make it host its own virtual MIDI device (to avoid the need to install
-      LoopMIDI)
-- [ ] Write documentation
-- [ ] Add shell commands
-  - [ ] `flapi`: run a Python shell with `flapi` enabled
-  - [ ] `flapi install`: install the `Flapi Server` script in FL Studio
-  - [ ] `flapi uninstall`: remove the `Flapi Server` script from FL Studio
+On MacOS, Flapi is able to create this MIDI port automatically.
 
 ## Credits
 
