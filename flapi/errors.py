@@ -3,6 +3,7 @@
 
 Error classes used within FlApi
 """
+from .__util import bytes_to_str
 
 
 class FlapiPortError(IOError):
@@ -23,7 +24,7 @@ class FlapiPortError(IOError):
         )
 
 
-class FlapiConnectionError(Exception):
+class FlapiConnectionError(ConnectionError):
     """
     Flapi was able to connect to the MIDI port, but didn't receive a response
     from the server.
@@ -45,6 +46,44 @@ class FlapiInvalidMsgError(ValueError):
     """
     Flapi unexpectedly received a MIDI message that it could not process
     """
+    def __init__(self, msg: bytes) -> None:
+        super().__init__(
+            f"Flapi received a message that it didn't understand. Perhaps "
+            f"another device is communicating on Flapi's MIDI port. Message "
+            f"received: {bytes_to_str(msg)}"
+        )
+
+
+class FlapiServerError(Exception):
+    """
+    An unexpected error occurred on the server side.
+
+    Ensure that the Flapi server and client have matching versions.
+    """
+    def __init__(self, msg: str) -> None:
+        super().__init__(
+            f"An unexpected server error occurred due to a miscommunication. "
+            f"Please ensure the Flapi server version matches that of the "
+            f"Flapi client by running the `flapi install` command. "
+            f"If they do match, please open a bug report. "
+            f"Failure message: {msg}"
+        )
+
+
+class FlapiClientError(Exception):
+    """
+    An unexpected error occurred on the client side.
+
+    Ensure that the Flapi server and client have matching versions.
+    """
+    def __init__(self, msg: str) -> None:
+        super().__init__(
+            f"An unexpected client error occurred due to a miscommunication. "
+            f"Please ensure the Flapi server version matches that of the "
+            f"Flapi client by running the `flapi install` command. "
+            f"If they do match, please open a bug report. "
+            f"Failure message: {msg}"
+        )
 
 
 class FlapiTimeoutError(TimeoutError):

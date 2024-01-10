@@ -47,7 +47,25 @@ script.
 No extra data associated with this message type.
 """
 
-MSG_TYPE_EXEC = 0x01
+MSG_TYPE_VERSION_QUERY = 0x01
+"""
+Query the server version - this is used to ensure that the server is running
+a matching version of Flapi, so that there aren't any bugs with communication.
+
+## Request data
+
+No extra data
+
+## Response data
+
+3 bytes, each with a version number
+
+* major
+* minor
+* release
+"""
+
+MSG_TYPE_EXEC = 0x02
 """
 Exec message - this is used to run an `exec` command in FL Studio, with no
 return type (just a success, or an exception raised).
@@ -64,7 +82,7 @@ if status is MSG_STATUS_ERR, the `repr()` of the exception is encoded.
 Otherwise, there is no other data.
 """
 
-MSG_TYPE_EVAL = 0x02
+MSG_TYPE_EVAL = 0x03
 """
 Eval message - this is used to run an `eval` command in FL Studio, where the
 value that it produces is returned.
@@ -89,6 +107,13 @@ Message was processed correctly.
 MSG_STATUS_ERR = 0x01
 """
 Processing of message raised an exception.
+"""
+
+MSG_STATUS_FAIL = 0x02
+"""
+The message could not be processed
+
+The error message is attached in the remaining bytes.
 """
 
 DEVICE_ENQUIRY_MESSAGE = bytes([
