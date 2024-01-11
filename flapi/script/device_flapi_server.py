@@ -1,65 +1,33 @@
 # name=Flapi Server
 # supportedDevices=Flapi
 import device
-import sys
-import __consts as consts
+import consts
+from capout import Capout
 try:
     from fl_classes import FlMidiMsg
 except ImportError:
     pass
-try:
-    # This is the module in most Python installs, used for type safety
-    from io import StringIO
-except ImportError:
-    # This is the module in FL Studio for some reason
-    from _io import StringIO  # type: ignore
 
 
-def init_fake_stdout():
+def send_stdout(text: str):
     """
-    Initialize a fake buffer for stdout
+    Callback for Capout, sending stdout to the client console
     """
-    global fake_stdout
-    fake_stdout = StringIO()
-    sys.stdout = fake_stdout
-
-
-real_stdout = sys.stdout
-fake_stdout = StringIO()
-init_fake_stdout()
-
-
-def display_stdout():
-    """
-    Display the contents of stdout in FL Studio's console, then clear the
-    buffer
-    """
-    fake_stdout.seek(0)
-    print(fake_stdout.read(), file=real_stdout)
-    init_fake_stdout()
-
-
-def send_stdout():
-    """
-    Send the contents of stdout to the client's console, then clear the buffer
-    """
-    fake_stdout.seek(0)
-    text = fake_stdout.read()
     send_ok_with_data(consts.MSG_TYPE_STDOUT, text)
-    init_fake_stdout()
+
+
+capout = Capout(send_stdout)
+capout.enable()
 
 
 def OnInit():
-    print(
-        "\n".join([
-            "Flapi server",
-            f"Server version: {'.'.join(str(n) for n in consts.VERSION)}",
-            f"Device name: {device.getName()}",
-            f"Device assigned: {bool(device.isAssigned())}",
-            f"FL Studio port number: {device.getPortNumber()}",
-        ]),
-        file=real_stdout,
-    )
+    capout.fl_print("\n".join([
+        "Flapi server",
+        f"Server version: {'.'.join(str(n) for n in consts.VERSION)}",
+        f"Device name: {device.getName()}",
+        f"Device assigned: {bool(device.isAssigned())}",
+        f"FL Studio port number: {device.getPortNumber()}",
+    ]))
 
 
 def bytes_to_str(msg: bytes) -> str:
@@ -169,7 +137,7 @@ def fl_exec(code: str):
         return send_err(consts.MSG_TYPE_EXEC, e)
 
     # Operation was a success, give response
-    send_stdout()
+    capout.flush()
     return send_ok(consts.MSG_TYPE_EXEC)
 
 
@@ -185,7 +153,7 @@ def fl_eval(expression: str):
         return send_err(consts.MSG_TYPE_EVAL, e)
 
     # Operation was a success, give response
-    send_stdout()
+    capout.flush()
     return send_ok_with_data(consts.MSG_TYPE_EVAL, repr(result))
 
 
@@ -193,7 +161,7 @@ def receive_stdout(text: str):
     """
     Receive text from client, and display it in FL Studio's console
     """
-    print(text, end='', file=real_stdout)
+    capout.fl_print(text, end='')
 
 
 def OnSysEx(event: 'FlMidiMsg'):

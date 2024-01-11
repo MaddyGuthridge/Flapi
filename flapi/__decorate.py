@@ -10,7 +10,7 @@ from typing import Callable, TypeVar
 from typing_extensions import ParamSpec
 from functools import wraps
 from .__comms import fl_eval
-from .__consts import FL_MODULES
+from ._consts import FL_MODULES
 
 P = ParamSpec('P')
 R = TypeVar('R')

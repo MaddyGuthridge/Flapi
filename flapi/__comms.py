@@ -8,7 +8,7 @@ Code for communicating events to FL Studio.
 The data format used to communicate is quite simple, containing only a small
 number of bytes
 
-### Sysex header (as found in the `__consts` module)
+### Sysex header (as found in the `_consts` module)
 
 Used to ensure that the message originates from Flapi's systems.
 
@@ -52,8 +52,9 @@ Depends on the type of message, however, there are a few general patterns.
 import time
 from mido import Message as MidoMsg  # type: ignore
 from typing import Any, Optional
+from .__util import try_eval
 from .__context import getContext
-from . import __consts as consts
+from flapi import _consts as consts
 from .errors import (
     FlapiTimeoutError,
     FlapiInvalidMsgError,
@@ -125,7 +126,7 @@ def assert_response_is_ok(msg: bytes, expected_msg_type: int):
     if msg_status == consts.MSG_STATUS_OK:
         return
     elif msg_status == consts.MSG_STATUS_ERR:
-        raise eval(msg[2:])
+        raise try_eval(msg[2:])
     elif msg_status == consts.MSG_STATUS_FAIL:
         raise FlapiServerError(msg[2:].decode())
 
@@ -235,7 +236,7 @@ def fl_eval(expression: str) -> Any:
     assert_response_is_ok(response, consts.MSG_TYPE_EVAL)
 
     # Value is ok, eval and return it
-    return eval(response[2:])
+    return try_eval(response[2:])
 
 
 def fl_print(text: str):
