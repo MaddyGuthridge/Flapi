@@ -31,74 +31,63 @@ SHELL_SCOPE = {
 }
 
 
-STATEMENT_KEYWORDS = [
-    "def",
-    "class",
-    "import",
-    "if",
-    "assert",
-    "try",
-    "pass",
-    "raise",
-    "with",
-    "global",
-]
-
-
-def exec_lines(lines: list[str]):
+def exec_lines(lines: list[str]) -> bool:
     """
-    Execute the given lines on the server
-    """
-    code = "\n".join(lines)
+    Attempt to execute the given lines on the server.
 
-    # If it's a keyword, we'll assume this is a statement
-    is_statement = code.split(" ")[0].replace(":", "") in STATEMENT_KEYWORDS
+    Returns `True` if the lines were executed, or `False` if the code is
+    incomplete.
+
+    Raises an exception if the code is complete but has some kind of error.
+    """
+    source = "\n".join(lines)
+
+    # First check if the lines actually compile
+    # This raises an error if the lines are complete, but invalid
+    try:
+        if code.compile_command(source) is None:
+            return False
+    except Exception:
+        print_exc()
+        return True
+
+    # Determine if the code is a statement, an expression, or invalid
+    # https://stackoverflow.com/a/3876268/6335363
+    try:
+        code.compile_command(source, symbol='eval')
+        is_statement = False
+    except SyntaxError:
+        is_statement = True
 
     if code == "exit":
         exit()
     try:
         if is_statement:
-            fl_exec(code)
+            fl_exec(source)
         else:
-            res = fl_eval(code)
+            res = fl_eval(source)
             print(repr(res))
     except Exception:
         print_exc()
+
+    return True
 
 
 def start_server_shell():
     """
     A simple REPL where all code is run server-side
-
-    Note: this is very very buggy and probably shouldn't be relied upon.
     """
     print("Type `exit` to quit")
 
     lines = []
-    is_indented = False
-    curr_prompt = ">>> "
 
     while True:
-        line = input(curr_prompt)
+        line = input(">>> " if not len(lines) else "... ")
         lines.append(line)
 
-        # If we're not indented, check if the next line will be
-        if line.strip().endswith(":"):
-            is_indented = True
-
-        # If we are indented, only an empty line can end the statement
-        if is_indented:
-            if line == "":
-                exec_lines(lines)
-                lines = []
-                is_indented = False
-                curr_prompt = ">>> "
-            else:
-                curr_prompt = "... "
-        else:
-            exec_lines(lines)
+        # If we fully executed the lines, clear the buffer
+        if exec_lines(lines):
             lines = []
-            curr_prompt = ">>> "
 
 
 def start_python_shell():
