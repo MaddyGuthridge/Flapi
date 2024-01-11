@@ -3,7 +3,7 @@
 
 Helper functions
 """
-from typing import Any
+from typing import Any, Union
 
 
 def bytes_to_str(msg: bytes) -> str:
@@ -13,7 +13,7 @@ def bytes_to_str(msg: bytes) -> str:
     return f"{repr([hex(i) for i in msg])} ({repr(msg)})"
 
 
-def try_eval(source: str | bytes) -> Any:
+def try_eval(source: Union[str, bytes]) -> Any:
     """
     Evaluate the given source code, but raise a sane exception if it fails
     """
