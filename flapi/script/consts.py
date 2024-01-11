@@ -104,6 +104,15 @@ MSG_TYPE_STDOUT = 0x04
 Message contains text to write into stdout
 """
 
+MSG_TYPE_EXIT = 0x05
+"""
+Message from server instructing client to exit. Used so that we can have a
+working `exit` function when using the server-side REPL.
+
+Associated data is an exit code, as an ASCII-encoded string (since otherwise
+certain exit codes could break the MIDI spec)
+"""
+
 MSG_STATUS_OK = 0x00
 """
 Message was processed correctly.

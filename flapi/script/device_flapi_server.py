@@ -37,11 +37,22 @@ def bytes_to_str(msg: bytes) -> str:
     return f"{repr([hex(i) for i in msg])} ({repr(msg)})"
 
 
+def send_sysex(msg: bytes):
+    """
+    Helper for sending sysex, with some debugging print statements, since this
+    seems to cause FL Studio to crash a lot of the time, and I want to find out
+    why
+    """
+    # capout.fl_print(f"MSG OUT -- {bytes_to_str(msg)}")
+    device.midiOutSysex(msg)
+    # capout.fl_print("MSG OUT SUCCESS")
+
+
 def send_ok(msg_type: int):
     """
     Respond to a message with an OK status
     """
-    device.midiOutSysex(
+    send_sysex(
         bytes([0xF0])
         + consts.SYSEX_HEADER
         + bytes([
@@ -61,7 +72,7 @@ def send_ok_with_data(msg_type: int, data: 'str | bytes'):
     if isinstance(data, str):
         data = data.encode()
 
-    device.midiOutSysex(
+    send_sysex(
         bytes([0xF0])
         + consts.SYSEX_HEADER
         + bytes([
@@ -78,7 +89,7 @@ def send_err(msg_type: int, error: Exception):
     """
     Respond to a message with an ERR status
     """
-    device.midiOutSysex(
+    send_sysex(
         bytes([0xF0])
         + consts.SYSEX_HEADER
         + bytes([
@@ -95,7 +106,7 @@ def send_fail(msg_type: int, message: str):
     """
     Respond to a message with a FAIL status
     """
-    device.midiOutSysex(
+    send_sysex(
         bytes([0xF0])
         + consts.SYSEX_HEADER
         + bytes([
@@ -162,6 +173,13 @@ def receive_stdout(text: str):
     Receive text from client, and display it in FL Studio's console
     """
     capout.fl_print(text, end='')
+
+
+def exit(code: int = 0):
+    """
+    Exit function - this sends the Flapi client an exit message
+    """
+    send_ok_with_data(consts.MSG_TYPE_EXIT, str(code))
 
 
 def OnSysEx(event: 'FlMidiMsg'):

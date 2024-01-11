@@ -18,9 +18,6 @@ except ImportError:
     pass
 
 
-print("hi")
-
-
 class CapoutBuffer(TextIOBase):  # type: ignore
     """
     Custom buffer wrapping a StringIO, so that we can implement a callback
@@ -106,9 +103,6 @@ class CapoutBuffer(TextIOBase):  # type: ignore
         return self.__buf.write(s)
 
 
-print("hi2")
-
-
 class Capout:
     """
     Capture stdout in FL Studio
@@ -141,6 +135,3 @@ class Capout:
         Print to the client's output
         """
         print(*args, **kwargs, file=self.fake_stdout)
-
-
-print("hi3")

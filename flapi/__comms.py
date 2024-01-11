@@ -103,6 +103,10 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
         handle_stdout(msg.removeprefix(consts.SYSEX_HEADER)[3:])
         return None
 
+    # Handle exit command
+    if msg.removeprefix(consts.SYSEX_HEADER)[1] == consts.MSG_TYPE_EXIT:
+        exit(int(msg.removeprefix(consts.SYSEX_HEADER)[3:].decode()))
+
     # Normal processing
     return msg[len(consts.SYSEX_HEADER) + 1:]
 
