@@ -77,12 +77,22 @@ def start_server_shell():
     """
     A simple REPL where all code is run server-side
     """
-    print("Type `exit` to quit")
-
     lines = []
 
+    last_was_interrupted = False
+
     while True:
-        line = input(">>> " if not len(lines) else "... ")
+        try:
+            line = input(">>> " if not len(lines) else "... ")
+        except KeyboardInterrupt:
+            if last_was_interrupted:
+                exit()
+            else:
+                print("\nKeyboard interrupt. Press again to quit")
+                last_was_interrupted = True
+                continue
+
+        last_was_interrupted = False
         lines.append(line)
 
         # If we fully executed the lines, clear the buffer
