@@ -175,11 +175,18 @@ def receive_stdout(text: str):
     capout.fl_print(text, end='')
 
 
-def exit(code: int = 0):
+class __ExitCommand:
     """
     Exit function - this sends the Flapi client an exit message
     """
-    send_ok_with_data(consts.MSG_TYPE_EXIT, str(code))
+    def __repr__(self) -> str:
+        return "'Type `exit()` to quit'"
+
+    def __call__(self, code: int = 0):
+        send_ok_with_data(consts.MSG_TYPE_EXIT, str(code))
+
+
+exit = __ExitCommand()
 
 
 def OnSysEx(event: 'FlMidiMsg'):
