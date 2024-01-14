@@ -4,7 +4,7 @@
 Constants used by Flapi
 """
 
-VERSION = (0, 3, 1)
+VERSION = (0, 3, 2)
 """
 The version of Flapi in the format (major, minor, revision)
 """
@@ -133,6 +133,7 @@ The error message is attached in the remaining bytes.
 DEVICE_ENQUIRY_MESSAGE = bytes([
     # 0xF0 - begin sysex (omitted by Mido)
     0x7E,  # Universal sysex message
+    # FIXME: This is 0x7F on MacOS
     0x00,  # Device ID (assume zero?)
     0x06,  # General information
     0x01,  # Identity request

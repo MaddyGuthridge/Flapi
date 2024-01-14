@@ -9,6 +9,18 @@ except ImportError:
     pass
 
 
+def log_decorator(fn):
+    fn_name = fn.__name__
+
+    def decorator(*args, **kwargs):
+        capout.fl_print(f"> {fn_name}")
+        res = fn(*args, **kwargs)
+        capout.fl_print(f"< {fn_name}")
+        return res
+
+    return decorator
+
+
 def send_stdout(text: str):
     """
     Callback for Capout, sending stdout to the client console
@@ -119,6 +131,7 @@ def send_fail(msg_type: int, message: str):
     )
 
 
+@log_decorator
 def heartbeat():
     """
     Received a heartbeat message
@@ -126,6 +139,7 @@ def heartbeat():
     return send_ok(consts.MSG_TYPE_HEARTBEAT)
 
 
+@log_decorator
 def version_query():
     """
     Return the version of the Flapi server
@@ -136,6 +150,7 @@ def version_query():
     )
 
 
+# @log_decorator
 def fl_exec(code: str):
     """
     Execute some code
@@ -152,6 +167,7 @@ def fl_exec(code: str):
     return send_ok(consts.MSG_TYPE_EXEC)
 
 
+@log_decorator
 def fl_eval(expression: str):
     """
     Evaluate an expression
@@ -189,6 +205,7 @@ class __ExitCommand:
 exit = __ExitCommand()
 
 
+@log_decorator
 def OnSysEx(event: 'FlMidiMsg'):
     header = event.sysex[1:7]  # Sysex header
     data = event.sysex[7:-1]  # Any remaining sysex data
