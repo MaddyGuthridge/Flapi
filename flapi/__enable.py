@@ -36,7 +36,7 @@ def open_port(
         # If the only thing after it is a number, we are free to connect to it
         # It seems that something appends these numbers to each MIDI device to
         # make them more unique or something
-        if port_name not in curr_port_name:
+        if port_name.lower() not in curr_port_name.lower():
             continue
         try:
             # If this works, it's a match
