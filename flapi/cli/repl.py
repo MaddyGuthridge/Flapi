@@ -4,14 +4,25 @@
 Starts a simple REPL to interact with FL Studio, using IPython (if available)
 or Python's integrated shell.
 """
-import sys
 import code
 import click
+import sys
+import time
 from typing import Optional
 from traceback import print_exc
-from flapi import enable, init, disable, heartbeat, fl_exec, fl_eval, fl_print
-from flapi import _consts as consts
 import flapi
+from flapi import (
+    enable,
+    init,
+    try_init,
+    disable,
+    heartbeat,
+    fl_exec,
+    fl_eval,
+    fl_print,
+)
+from flapi import _consts as consts
+from flapi.cli import consts as cli_consts
 try:
     import IPython
     from IPython import start_ipython
@@ -31,6 +42,44 @@ SHELL_SCOPE = {
     "fl_eval": fl_eval,
     "fl_print": fl_print,
 }
+
+
+def wait_for_connection(max_wait: float) -> bool:
+    """
+    Busy wait until we establish a connection with FL Studio
+
+    Return whether wait was a success
+    """
+    def ellipsis(delta: float) -> str:
+        pos = int(delta * 2) % 6
+        if pos == 0:
+            return ".  "
+        elif pos == 1:
+            return ".. "
+        elif pos == 2:
+            return "..."
+        elif pos == 3:
+            return " .."
+        elif pos == 4:
+            return "  ."
+        else:  # pos == 5
+            return "   "
+
+    start_time = time.time()
+    while not try_init():
+        delta = time.time() - start_time
+        if delta > max_wait:
+            return False
+
+        # Print progress
+        print(
+            f" {ellipsis(delta)} Connecting to FL Studio ({int(delta)}"
+            f"/{int(max_wait)}s)",
+            end='\r',
+        )
+
+    print("Connected to FL Studio")
+    return True
 
 
 def exec_lines(lines: list[str]) -> bool:
@@ -127,20 +176,31 @@ def start_ipython_shell():
 
 @click.command()
 @click.option(
-    '-s',
-    '--shell',
+    "-s",
+    "--shell",
     type=click.Choice(["ipython", "python", "server"], case_sensitive=False),
     help="The shell to use with Flapi.",
     default=None,
 )
 @click.option(
-    '-p',
-    '--port',
+    "-p",
+    "--port",
     type=str,
     help="The name of the MIDI port to connect to",
     default=consts.DEFAULT_PORT_NAME,
 )
-def repl(shell: Optional[str] = None, port: str = consts.DEFAULT_PORT_NAME):
+@click.option(
+    "-t",
+    "--timeout",
+    type=float,
+    help="Maximum time to wait to establish a connection with FL Studio",
+    default=cli_consts.CONNECTION_TIMEOUT,
+)
+def repl(
+    shell: Optional[str] = None,
+    port: str = consts.DEFAULT_PORT_NAME,
+    timeout: float = cli_consts.CONNECTION_TIMEOUT,
+):
     """Main function to set up the Python shell"""
     print("Flapi interactive shell")
     print(f"Client version: {flapi.__version__}")
@@ -149,9 +209,11 @@ def repl(shell: Optional[str] = None, port: str = consts.DEFAULT_PORT_NAME):
     # Set up the connection
     status = enable(port)
 
+    if not status:
+        status = wait_for_connection(timeout)
+
     if shell == "server":
         if status:
-            print("Connected to FL Studio")
             start_server_shell()
         else:
             print("Flapi could not connect to FL Studio.")
@@ -162,9 +224,7 @@ def repl(shell: Optional[str] = None, port: str = consts.DEFAULT_PORT_NAME):
             print("Then, run this command again.")
             exit(1)
 
-    if status:
-        print("Connected to FL Studio")
-    else:
+    if not status:
         print("Flapi could not connect to FL Studio.")
         print(
             "Please verify that FL Studio is running and the server is "

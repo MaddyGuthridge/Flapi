@@ -4,12 +4,11 @@
 Code for initializing/closing Flapi
 """
 import mido  # type: ignore
-from time import sleep
 from typing import Protocol, Generic, TypeVar, Optional
 from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
 from . import _consts as _consts
 from .__context import setContext, popContext, FlapiContext
-from .__comms import poll_for_message, fl_exec, heartbeat, version_query
+from .__comms import fl_exec, heartbeat, version_query, poll_for_message
 from .__decorate import restore_original_functions, add_wrappers
 from .errors import FlapiPortError, FlapiConnectionError, FlapiVersionError
 
@@ -100,26 +99,32 @@ def enable(port_name: str = _consts.DEFAULT_PORT_NAME) -> bool:
 def init():
     """
     Initialize Flapi, so that it can send commands to FL Studio.
-
-    1. Check the connection by sending a heartbeat message.
-    2. Import all required modules in FL Studio.
     """
+    if not try_init():
+        raise FlapiConnectionError(
+            "FL Studio did not connect to Flapi - is it running?")
+
+
+def try_init() -> bool:
+    """
+    Attempt to initialize Flapi, returning whether the operation was a success.
+    """
+    # Poll for any new messages from FL Studio and handle them as required
+    poll_for_message()
     # Attempt to send a heartbeat message - if we get a response, we're already
-    # connected, but otherwise, we should wait a second, since FL Studio might
-    # just be taking a while to recognise us
-    if not heartbeat():
-        # Wait a second for FL Studio to register the MIDI device
-        sleep(1)
+    # connected
+    if heartbeat():
+        setup_server()
+        return True
+    else:
+        return False
 
-        # And now process any events, so we can tell FL Studio who we are,
-        # allowing the script to be initialized
-        poll_for_message()
 
-        # If we don't have a heartbeat now, FL Studio likely isn't running
-        if not heartbeat():
-            raise FlapiConnectionError(
-                "FL Studio did not connect to Flapi - is it running?")
-
+def setup_server():
+    """
+    Perform the required setup on the server side, importing modules, and the
+    like.
+    """
     # Make sure the versions are correct
     version_check()
 

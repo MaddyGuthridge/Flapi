@@ -11,3 +11,6 @@ DEFAULT_IL_DATA_DIR = Path(os.path.expanduser("~/Documents/Image-Line"))
 """
 The default location of the Image-Line data directory
 """
+
+
+CONNECTION_TIMEOUT = 60.0
