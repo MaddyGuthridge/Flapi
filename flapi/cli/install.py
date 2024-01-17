@@ -3,24 +3,41 @@
 
 Simple script for installing the Flapi server into FL Studio
 """
+import click
 from shutil import copytree, rmtree
 from pathlib import Path
+from . import consts
 from .util import yn_prompt, output_dir, script_dir
 
 
-def install_main(fl_data_dir: Path, force: bool = False):
+@click.command()
+@click.option(
+    "-d",
+    "--data-dir",
+    default=consts.DEFAULT_IL_DATA_DIR,
+    type=Path,
+    prompt=True,
+    help="The location of the Image-Line data directory"
+)
+@click.option(
+    "-y",
+    "--yes",
+    is_flag=True,
+    help="Always overwrite the server installation"
+)
+def install(data_dir: Path, yes: bool = False):
     """
-    Install the Flapi server
+    Install the Flapi server to FL Studio
     """
     # Determine scripts folder location
-    output_location = output_dir(fl_data_dir)
+    output_location = output_dir(data_dir)
 
     if output_location.exists():
         print(f"Warning: output directory '{output_location}' exists!")
-        if force:
-            print("--force used, continuing")
+        if yes:
+            print("--yes used, continuing")
         else:
-            if not yn_prompt("Overwrite (y/[n])? ", default=False):
+            if not yn_prompt("Overwrite? [y/N]: ", default=False):
                 print("Operation cancelled")
                 exit(1)
         rmtree(output_location)

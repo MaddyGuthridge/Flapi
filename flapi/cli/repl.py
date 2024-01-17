@@ -6,9 +6,11 @@ or Python's integrated shell.
 """
 import sys
 import code
+import click
 from typing import Optional
 from traceback import print_exc
 from flapi import enable, init, disable, heartbeat, fl_exec, fl_eval, fl_print
+from flapi import _consts as consts
 import flapi
 try:
     import IPython
@@ -123,16 +125,31 @@ def start_ipython_shell():
     start_ipython(argv=[], user_ns=SHELL_SCOPE, config=config)
 
 
-def repl_main(shell_to_use: Optional[str] = None):
+@click.command()
+@click.option(
+    '-s',
+    '--shell',
+    type=click.Choice(["ipython", "python", "server"], case_sensitive=False),
+    help="The shell to use with Flapi.",
+    default=None,
+)
+@click.option(
+    '-p',
+    '--port',
+    type=str,
+    help="The name of the MIDI port to connect to",
+    default=consts.DEFAULT_PORT_NAME,
+)
+def repl(shell: Optional[str] = None, port: str = consts.DEFAULT_PORT_NAME):
     """Main function to set up the Python shell"""
     print("Flapi interactive shell")
     print(f"Client version: {flapi.__version__}")
     print(f"Python version: {sys.version}")
 
     # Set up the connection
-    status = enable()
+    status = enable(port)
 
-    if shell_to_use == "server":
+    if shell == "server":
         if status:
             print("Connected to FL Studio")
             start_server_shell()
@@ -158,9 +175,9 @@ def repl_main(shell_to_use: Optional[str] = None):
     print("Imported functions:")
     print("enable, init, disable, heartbeat, fl_exec, fl_eval")
 
-    if shell_to_use == "python":
+    if shell == "python":
         return start_python_shell()
-    elif shell_to_use == "ipython":
+    elif shell == "ipython":
         if IPython is None:
             print("Error: IPython is not installed!")
             exit(1)

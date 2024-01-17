@@ -3,13 +3,13 @@
 
 Code for running the Flapi CLI
 """
-from .install import install_main
-from .uninstall import uninstall_main
-from .repl import repl_main
+from .install import install
+from .uninstall import uninstall
+from .repl import repl
 
 
 __all__ = [
-    'install_main',
-    'uninstall_main',
-    'repl_main',
+    'install',
+    'uninstall',
+    'repl',
 ]
