@@ -50,6 +50,7 @@ Depends on the type of message, however, there are a few general patterns.
   `repr` doesn't provide a complete reconstruction) cannot be shared.
 """
 import time
+import logging
 from mido import Message as MidoMsg  # type: ignore
 from typing import Any, Optional
 from .__util import try_eval
@@ -63,6 +64,9 @@ from .errors import (
 )
 
 
+log = logging.getLogger(__name__)
+
+
 def send_msg(msg: bytes):
     """
     Send a message to FL Studio
@@ -71,8 +75,8 @@ def send_msg(msg: bytes):
     getContext().port.send(mido_msg)
 
 
-def handle_stdout(output: bytes):
-    print(output.decode(), end='')
+def handle_stdout(output: str):
+    print(output, end='')
 
 
 def handle_received_message(msg: bytes) -> Optional[bytes]:
@@ -84,11 +88,13 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
     # Handle universal device enquiry
     if msg == consts.DEVICE_ENQUIRY_MESSAGE:
         # Send the response
+        log.debug('Received universal device enquiry')
         send_msg(consts.DEVICE_ENQUIRY_RESPONSE)
         return None
 
     # Handle invalid message types
     if not msg.startswith(consts.SYSEX_HEADER):
+        log.debug('Received unrecognised message')
         raise FlapiInvalidMsgError(msg)
 
     # Handle loopback (prevent us from receiving our own messages)
@@ -100,12 +106,16 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
 
     # Handle FL Studio stdout
     if msg.removeprefix(consts.SYSEX_HEADER)[1] == consts.MSG_TYPE_STDOUT:
-        handle_stdout(msg.removeprefix(consts.SYSEX_HEADER)[3:])
+        text = msg.removeprefix(consts.SYSEX_HEADER)[3:].decode()
+        log.debug(f"Received server stdout: {text}")
+        handle_stdout(text)
         return None
 
     # Handle exit command
     if msg.removeprefix(consts.SYSEX_HEADER)[1] == consts.MSG_TYPE_EXIT:
-        exit(int(msg.removeprefix(consts.SYSEX_HEADER)[3:].decode()))
+        code = int(msg.removeprefix(consts.SYSEX_HEADER)[3:].decode())
+        log.info(f"Received exit command with code {code}")
+        exit(code)
 
     # Normal processing
     return msg[len(consts.SYSEX_HEADER) + 1:]
@@ -122,8 +132,16 @@ def assert_response_is_ok(msg: bytes, expected_msg_type: int):
     msg_type = msg[0]
 
     if msg_type != expected_msg_type:
+        expected = consts.MSG_TYPE_NAMES.get(
+            expected_msg_type,
+            str(expected_msg_type),
+        )
+        actual = consts.MSG_TYPE_NAMES.get(
+            msg_type,
+            str(msg_type),
+        )
         raise FlapiClientError(
-            f"Expected message type {expected_msg_type}, received {msg_type}")
+            f"Expected message type '{expected}', received '{actual}'")
 
     msg_status = msg[1]
 
@@ -180,6 +198,7 @@ def heartbeat() -> bool:
 
     If no data is received, this function returns `False`.
     """
+    log.debug("heartbeat")
     try:
         send_msg(consts.SYSEX_HEADER + bytes([
             consts.MSG_FROM_CLIENT,
@@ -187,8 +206,10 @@ def heartbeat() -> bool:
         ]))
         response = receive_message()
         assert_response_is_ok(response, consts.MSG_TYPE_HEARTBEAT)
+        log.debug("heartbeat: passed")
         return True
     except FlapiTimeoutError:
+        log.debug("heartbeat: failed")
         return False
 
 
@@ -196,11 +217,13 @@ def version_query() -> tuple[int, int, int]:
     """
     Query and return the version of Flapi installed to FL Studio.
     """
+    log.debug("version_query")
     send_msg(
         consts.SYSEX_HEADER
         + bytes([consts.MSG_FROM_CLIENT, consts.MSG_TYPE_VERSION_QUERY])
     )
     response = receive_message()
+    log.debug("version_query: got response")
 
     assert_response_is_ok(response, consts.MSG_TYPE_VERSION_QUERY)
 
@@ -215,12 +238,14 @@ def fl_exec(code: str) -> None:
     """
     Output Python code to FL Studio, where it will be executed.
     """
+    log.debug(f"fl_exec: {code}")
     send_msg(
         consts.SYSEX_HEADER
         + bytes([consts.MSG_FROM_CLIENT, consts.MSG_TYPE_EXEC])
         + code.encode()
     )
     response = receive_message()
+    log.debug("fl_exec: got response")
 
     assert_response_is_ok(response, consts.MSG_TYPE_EXEC)
 
@@ -230,12 +255,14 @@ def fl_eval(expression: str) -> Any:
     Output a Python expression to FL Studio, where it will be evaluated, with
     the result being returned.
     """
+    log.debug(f"fl_eval: {expression}")
     send_msg(
         consts.SYSEX_HEADER
         + bytes([consts.MSG_FROM_CLIENT, consts.MSG_TYPE_EVAL])
         + expression.encode()
     )
     response = receive_message()
+    log.debug("fl_eval: got response")
 
     assert_response_is_ok(response, consts.MSG_TYPE_EVAL)
 
@@ -247,6 +274,7 @@ def fl_print(text: str):
     """
     Print the given text to FL Studio's Python console.
     """
+    log.debug(f"fl_print (not expecting response): {text}")
     send_msg(
         consts.SYSEX_HEADER
         + bytes([consts.MSG_FROM_CLIENT, consts.MSG_TYPE_STDOUT])

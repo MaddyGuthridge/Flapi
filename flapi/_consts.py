@@ -113,6 +113,18 @@ Associated data is an exit code, as an ASCII-encoded string (since otherwise
 certain exit codes could break the MIDI spec)
 """
 
+MSG_TYPE_NAMES = {
+    MSG_TYPE_HEARTBEAT: "heartbeat",
+    MSG_TYPE_VERSION_QUERY: "version query",
+    MSG_TYPE_EXEC: "exec",
+    MSG_TYPE_EVAL: "eval",
+    MSG_TYPE_STDOUT: "stdout",
+    MSG_TYPE_EXIT: "exit",
+}
+"""
+Names of message types
+"""
+
 MSG_STATUS_OK = 0x00
 """
 Message was processed correctly.

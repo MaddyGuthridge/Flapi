@@ -3,6 +3,7 @@
 
 Code for initializing/closing Flapi
 """
+import logging
 import mido  # type: ignore
 from typing import Protocol, Generic, TypeVar, Optional
 from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
@@ -11,6 +12,9 @@ from .__context import setContext, popContext, FlapiContext
 from .__comms import fl_exec, heartbeat, version_query, poll_for_message
 from .__decorate import restore_original_functions, add_wrappers
 from .errors import FlapiPortError, FlapiConnectionError, FlapiVersionError
+
+
+log = logging.getLogger(__name__)
 
 
 T = TypeVar('T', BaseInput, BaseOutput, covariant=True)
@@ -65,11 +69,24 @@ def enable(port_name: str = _consts.DEFAULT_PORT_NAME) -> bool:
       will need to call `init()` once FL Studio is running and configured
       correctly.
     """
+    log.info(f"Enable Flapi client on port '{port_name}'")
     # First, connect to all the MIDI ports
-    res = open_port(
-        port_name, mido.get_input_names(), mido.open_input)  # type: ignore
-    req = open_port(
-        port_name, mido.get_output_names(), mido.open_output)  # type: ignore
+    inputs = mido.get_input_names()  # type: ignore
+    outputs = mido.get_output_names()  # type: ignore
+
+    log.info(f"Available inputs are: {inputs}")
+    log.info(f"Available outputs are: {outputs}")
+
+    try:
+        res = open_port(port_name, inputs, mido.open_input)  # type: ignore
+    except Exception:
+        log.exception("Error when connecting to input")
+        raise
+    try:
+        req = open_port(port_name, outputs, mido.open_output)  # type: ignore
+    except Exception:
+        log.exception("Error when connecting to output")
+        raise
 
     if res is None or req is None:
         try:
@@ -79,6 +96,7 @@ def enable(port_name: str = _consts.DEFAULT_PORT_NAME) -> bool:
             )
         except NotImplementedError as e:
             # Port could not be opened
+            log.exception("Could not open create new port")
             raise FlapiPortError(port_name) from e
     else:
         port = IOPort(res, req)

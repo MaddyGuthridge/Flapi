@@ -19,26 +19,15 @@ from .util import output_dir
     prompt=True,
     help="The path of the Image-Line data directory. Set to '-' for default",
 )
-@click.option(
-    "-y",
-    "--yes",
-    is_flag=True,
-    help="Proceed with uninstallation without confirmation",
-    prompt="Are you sure you want to uninstall the Flapi server?"
+@click.confirmation_option(
+    prompt="Are you sure you want to uninstall the Flapi server?",
 )
-def uninstall(
-    data_dir: Path,
-    yes: bool = False,
-):
+def uninstall(data_dir: Path):
     """
     Uninstall the Flapi server
     """
     # Determine scripts folder location
     server_location = output_dir(data_dir)
-
-    if not yes:
-        print("Operation cancelled")
-        exit(1)
 
     # Remove it
     rmtree(server_location)

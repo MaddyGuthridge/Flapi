@@ -14,3 +14,6 @@ The default location of the Image-Line data directory
 
 
 CONNECTION_TIMEOUT = 60.0
+"""
+The maximum duration to wait for a connection with FL Studio
+"""

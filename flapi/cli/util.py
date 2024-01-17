@@ -5,6 +5,16 @@ Helper functions for CLI
 """
 from typing import Optional
 from pathlib import Path
+import logging
+
+
+def handle_verbose(verbose: int):
+    if verbose == 0:
+        return
+    elif verbose == 1:
+        logging.basicConfig(level="INFO")
+    else:
+        logging.basicConfig(level="DEBUG")
 
 
 def yn_prompt(prompt: str, default: Optional[bool] = None) -> bool:

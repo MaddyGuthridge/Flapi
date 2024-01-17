@@ -3,9 +3,10 @@
 
 Code for decorating the FL Studio API libraries to enable Flapi
 """
-from types import FunctionType
+import logging
 import inspect
 import importlib
+from types import FunctionType
 from typing import Callable, TypeVar
 from typing_extensions import ParamSpec
 from functools import wraps
@@ -14,6 +15,8 @@ from ._consts import FL_MODULES
 
 P = ParamSpec('P')
 R = TypeVar('R')
+
+log = logging.getLogger(__name__)
 
 
 ApiCopyType = dict[str, dict[str, FunctionType]]
@@ -49,11 +52,10 @@ def add_wrappers() -> ApiCopyType:
     For each FL Studio module, replace its items with a decorated version that
     evaluates the function inside FL Studio.
     """
+    log.info("Adding wrappers to API stubs")
 
     modules: ApiCopyType = {}
-
     for mod_name in FL_MODULES:
-
         modules[mod_name] = {}
 
         mod = importlib.import_module(mod_name)
@@ -74,6 +76,7 @@ def restore_original_functions(backup: ApiCopyType):
     Restore the original FL Studio API Stubs functions - called when
     deactivating Flapi.
     """
+    log.info("Removing wrappers from API stubs")
     for mod_name, functions in backup.items():
         mod = importlib.import_module(mod_name)
 

@@ -23,6 +23,7 @@ from flapi import (
 )
 from flapi import _consts as consts
 from flapi.cli import consts as cli_consts
+from .util import handle_verbose
 try:
     import IPython
     from IPython import start_ipython
@@ -196,12 +197,15 @@ def start_ipython_shell():
     help="Maximum time to wait to establish a connection with FL Studio",
     default=cli_consts.CONNECTION_TIMEOUT,
 )
+@click.option('-v', '--verbose', count=True)
 def repl(
     shell: Optional[str] = None,
     port: str = consts.DEFAULT_PORT_NAME,
     timeout: float = cli_consts.CONNECTION_TIMEOUT,
+    verbose: int = 0,
 ):
     """Main function to set up the Python shell"""
+    handle_verbose(verbose)
     print("Flapi interactive shell")
     print(f"Client version: {flapi.__version__}")
     print(f"Python version: {sys.version}")
