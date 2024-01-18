@@ -107,11 +107,7 @@ def enable(port_name: str = _consts.DEFAULT_PORT_NAME) -> bool:
     # Register the context
     setContext(FlapiContext(port, functions_backup))
 
-    try:
-        init()
-    except FlapiConnectionError:
-        return False
-    return True
+    return try_init()
 
 
 def init():
