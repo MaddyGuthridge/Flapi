@@ -17,7 +17,7 @@ from .util import yn_prompt, output_dir, script_dir
     default=consts.DEFAULT_IL_DATA_DIR,
     type=Path,
     prompt=True,
-    help="The location of the Image-Line data directory"
+    help="The path of the Image-Line data directory. Set to '-' for default",
 )
 @click.option(
     "-y",
@@ -29,6 +29,8 @@ def install(data_dir: Path, yes: bool = False):
     """
     Install the Flapi server to FL Studio
     """
+    if data_dir == Path("-"):
+        data_dir = consts.DEFAULT_IL_DATA_DIR
     # Determine scripts folder location
     output_location = output_dir(data_dir)
 

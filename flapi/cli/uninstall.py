@@ -22,10 +22,12 @@ from .util import output_dir
 @click.confirmation_option(
     prompt="Are you sure you want to uninstall the Flapi server?",
 )
-def uninstall(data_dir: Path):
+def uninstall(data_dir: Path = consts.DEFAULT_IL_DATA_DIR):
     """
     Uninstall the Flapi server
     """
+    if data_dir == Path("-"):
+        data_dir = consts.DEFAULT_IL_DATA_DIR
     # Determine scripts folder location
     server_location = output_dir(data_dir)
 
