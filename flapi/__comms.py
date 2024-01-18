@@ -54,7 +54,7 @@ import logging
 from mido import Message as MidoMsg  # type: ignore
 from typing import Any, Optional
 from .__util import try_eval
-from .__context import getContext
+from .__context import get_context
 from flapi import _consts as consts
 from .errors import (
     FlapiTimeoutError,
@@ -72,7 +72,7 @@ def send_msg(msg: bytes):
     Send a message to FL Studio
     """
     mido_msg = MidoMsg("sysex", data=msg)
-    getContext().port.send(mido_msg)
+    get_context().port.send(mido_msg)
 
 
 def handle_stdout(output: str):
@@ -157,7 +157,7 @@ def poll_for_message() -> Optional[bytes]:
     """
     Poll for new MIDI messages from FL Studio
     """
-    ctx = getContext()
+    ctx = get_context()
     if (msg := ctx.port.receive(block=False)) is not None:
         # If there was a message, do pre-handling of message
         # Make sure to remove the start and end bits to simplify processing

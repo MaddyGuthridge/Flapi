@@ -8,7 +8,7 @@ import mido  # type: ignore
 from typing import Protocol, Generic, TypeVar, Optional
 from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
 from . import _consts as _consts
-from .__context import setContext, popContext, FlapiContext
+from .__context import set_context, pop_context, FlapiContext
 from .__comms import fl_exec, heartbeat, version_query, poll_for_message
 from .__decorate import restore_original_functions, add_wrappers
 from .errors import FlapiPortError, FlapiConnectionError, FlapiVersionError
@@ -105,7 +105,7 @@ def enable(port_name: str = _consts.DEFAULT_PORT_NAME) -> bool:
     functions_backup = add_wrappers()
 
     # Register the context
-    setContext(FlapiContext(port, functions_backup))
+    set_context(FlapiContext(port, functions_backup))
 
     return try_init()
 
@@ -179,7 +179,7 @@ def disable():
     This restores the original functions for the FL Studio API.
     """
     # Close all the ports
-    ctx = popContext()
+    ctx = pop_context()
     ctx.port.close()
 
     # Then restore the functions

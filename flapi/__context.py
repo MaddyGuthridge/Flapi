@@ -32,7 +32,7 @@ The current context for Flapi
 """
 
 
-def setContext(new_context: FlapiContext):
+def set_context(new_context: FlapiContext):
     """
     Set the context for Flapi
     """
@@ -40,7 +40,7 @@ def setContext(new_context: FlapiContext):
     context = new_context
 
 
-def getContext() -> FlapiContext:
+def get_context() -> FlapiContext:
     """
     Get a reference to the Flapi context
     """
@@ -49,7 +49,7 @@ def getContext() -> FlapiContext:
     return context
 
 
-def popContext() -> FlapiContext:
+def pop_context() -> FlapiContext:
     """
     Clear the Flapi context, returning its value so that clean-up can be
     performed
