@@ -9,13 +9,24 @@ except ImportError:
     pass
 
 
+def format_fn_params(args, kwargs):
+    args_str = ", ".join(repr(a) for a in args)
+    kwargs_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())
+
+    # Overall parameters string (avoid invalid syntax by removing extra
+    # commas)
+    return f"{args_str}, {kwargs_str}"\
+        .removeprefix(", ")\
+        .removesuffix(", ")
+
+
 def log_decorator(fn):
     fn_name = fn.__name__
 
     def decorator(*args, **kwargs):
-        capout.fl_print(f"> {fn_name}")
+        capout.fl_print(f"> {fn_name}({format_fn_params(args, kwargs)})")
         res = fn(*args, **kwargs)
-        capout.fl_print(f"< {fn_name}")
+        capout.fl_print(f"< {fn_name}({format_fn_params(args, kwargs)})")
         return res
 
     return decorator
@@ -150,7 +161,7 @@ def version_query():
     )
 
 
-# @log_decorator
+@log_decorator
 def fl_exec(code: str):
     """
     Execute some code
@@ -205,7 +216,7 @@ class __ExitCommand:
 exit = __ExitCommand()
 
 
-@log_decorator
+# @log_decorator
 def OnSysEx(event: 'FlMidiMsg'):
     header = event.sysex[1:7]  # Sysex header
     data = event.sysex[7:-1]  # Any remaining sysex data

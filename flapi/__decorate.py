@@ -12,6 +12,7 @@ from typing_extensions import ParamSpec
 from functools import wraps
 from .__comms import fl_eval
 from ._consts import FL_MODULES
+from .__util import format_fn_params
 
 P = ParamSpec('P')
 R = TypeVar('R')
@@ -33,14 +34,7 @@ def decorate(
     """
     @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        args_str = ", ".join(repr(a) for a in args)
-        kwargs_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())
-
-        # Overall parameters string (avoid invalid syntax by removing extra
-        # commas)
-        params = f"{args_str}, {kwargs_str}"\
-            .removeprefix(", ")\
-            .removesuffix(", ")
+        params = format_fn_params(args, kwargs)
 
         return fl_eval(f"{module}.{func_name}({params})")
 

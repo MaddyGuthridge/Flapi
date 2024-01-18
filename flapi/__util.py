@@ -24,3 +24,14 @@ def try_eval(source: Union[str, bytes]) -> Any:
     except Exception as e:
         raise ValueError(
             f"Unable to evaluate code {repr(source)}, got error {repr(e)}")
+
+
+def format_fn_params(args, kwargs):
+    args_str = ", ".join(repr(a) for a in args)
+    kwargs_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())
+
+    # Overall parameters string (avoid invalid syntax by removing extra
+    # commas)
+    return f"{args_str}, {kwargs_str}"\
+        .removeprefix(", ")\
+        .removesuffix(", ")
