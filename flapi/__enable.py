@@ -7,7 +7,7 @@ import logging
 import mido  # type: ignore
 from typing import Protocol, Generic, TypeVar, Optional
 from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
-from . import _consts as _consts
+from . import _consts as consts
 from .__context import set_context, pop_context, FlapiContext
 from .__comms import fl_exec, heartbeat, version_query, poll_for_message
 from .__decorate import restore_original_functions, add_wrappers
@@ -54,7 +54,7 @@ def open_port(
     return None
 
 
-def enable(port_name: str = _consts.DEFAULT_PORT_NAME) -> bool:
+def enable(port_name: str = consts.DEFAULT_PORT_NAME) -> bool:
     """
     Enable Flapi, connecting it to the given MIDI ports
 
@@ -143,7 +143,9 @@ def setup_server():
     version_check()
 
     # Finally, import all of the required modules in FL Studio
-    fl_exec(f"import {', '.join(_consts.FL_MODULES)}")
+    fl_exec(f"import {', '.join(consts.FL_MODULES)}")
+
+    log.info("Server initialization succeeded")
 
 
 def version_check():
@@ -153,7 +155,7 @@ def version_check():
     If not, raise an exception.
     """
     server_version = version_query()
-    client_version = _consts.VERSION
+    client_version = consts.VERSION
 
     if server_version < client_version:
         raise FlapiVersionError(

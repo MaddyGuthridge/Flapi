@@ -4,7 +4,7 @@
 Constants used by Flapi
 """
 
-VERSION = (0, 4, 0)
+VERSION = (0, 4, 1)
 """
 The version of Flapi in the format (major, minor, revision)
 """
