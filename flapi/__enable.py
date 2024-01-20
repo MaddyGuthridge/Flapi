@@ -143,8 +143,7 @@ def setup_server():
     version_check()
 
     # Finally, import all of the required modules in FL Studio
-    for mod in _consts.FL_MODULES:
-        fl_exec(f"import {mod}")
+    fl_exec(f"import {', '.join(_consts.FL_MODULES)}")
 
 
 def version_check():
