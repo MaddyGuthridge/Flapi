@@ -199,6 +199,7 @@ def heartbeat() -> bool:
     If no data is received, this function returns `False`.
     """
     log.debug("heartbeat")
+    start = time.time()
     try:
         send_msg(consts.SYSEX_HEADER + bytes([
             consts.MSG_FROM_CLIENT,
@@ -206,7 +207,8 @@ def heartbeat() -> bool:
         ]))
         response = receive_message()
         assert_response_is_ok(response, consts.MSG_TYPE_HEARTBEAT)
-        log.debug("heartbeat: passed")
+        end = time.time()
+        log.debug(f"heartbeat: passed in {end - start:.3} seconds")
         return True
     except FlapiTimeoutError:
         log.debug("heartbeat: failed")
