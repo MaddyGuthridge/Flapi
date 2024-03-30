@@ -1,3 +1,5 @@
+# name=Flapi Receive
+# supportedDevices=Flapi Request
 """
 # Flapi / Server / Flapi Receive
 
@@ -6,15 +8,13 @@ Responsible for receiving request messages from the Flapi Client.
 It attaches to the "Flapi Request" device and handles messages before sending
 a response via the "Flapi Respond" script.
 """
-# name=Flapi Receive
-# supportedDevices=Flapi Request
 import logging
 import device
 from base64 import b64decode
-from . import consts
-from .consts import MessageStatus, MessageOrigin, MessageType
-from .capout import Capout
-from .flapi_response import FlapiResponse
+import consts
+from consts import MessageStatus, MessageOrigin, MessageType
+from capout import Capout
+from flapi_response import FlapiResponse
 
 try:
     from fl_classes import FlMidiMsg

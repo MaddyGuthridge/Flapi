@@ -1,3 +1,6 @@
+# name=Flapi Respond
+# supportedDevices=Flapi Response
+# receiveFrom=Flapi Receive
 """
 # Flapi / Server / Flapi Respond
 
@@ -7,11 +10,8 @@ Studio.
 It attaches to the "Flapi Response" device and sends MIDI messages back to the
 Flapi client.
 """
-# name=Flapi Respond
-# supportedDevices=Flapi Response
-# receiveFrom=Flapi Receive
 import device
-from .consts import MessageOrigin, MessageType, SYSEX_HEADER
+from consts import MessageOrigin, MessageType, SYSEX_HEADER
 
 try:
     from fl_classes import FlMidiMsg

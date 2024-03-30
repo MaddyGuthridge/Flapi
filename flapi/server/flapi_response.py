@@ -7,7 +7,7 @@ import device
 import pickle
 from typing import Any, Literal, overload
 from base64 import b64encode, b64decode
-from .consts import SYSEX_HEADER, MessageOrigin, MessageType, MessageStatus
+from consts import SYSEX_HEADER, MessageOrigin, MessageType, MessageStatus
 
 
 def send_sysex(msg: bytes):
@@ -17,7 +17,10 @@ def send_sysex(msg: bytes):
     why.
     """
     # capout.fl_print(f"MSG OUT -- {bytes_to_str(msg)}")
-    device.midiOutSysex(msg)
+    if device.dispatchReceiverCount() == 0:
+        print("ERROR: No response device found")
+    for i in range(device.dispatchReceiverCount()):
+        device.dispatch(i, 0xF0, msg)
     # capout.fl_print("MSG OUT SUCCESS")
 
 
