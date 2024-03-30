@@ -220,9 +220,9 @@ show different sections of the message.
 | Server | `F07D466C617069` `01` `01` `00`                         | Server responds, accepting the connection |
 | Client | `F07D466C617069` `00` `01` `03`                         | Client requests server version information |
 | Server | `F07D466C617069` `01` `01` `03` `010000`                | Server responds, saying it is using version `1.0.0` |
-| Client | `F07D466C617069` `00` `01` `04` `67415...3554C673D3D`   | Client requests to execute `import transport` |
+| Client | `F07D466C617069` `00` `01` `04` `61573...97964413D3D`   | Client requests to execute `import transport` |
 | Server | `F07D466C617069` `01` `01` `04` `00`                    | Server responds, indicating success |
-| Client | `F07D466C617069` `00` `01` `05` `67415...7706C43343D`   | Client requests to evaluate `transport.start()` |
+| Client | `F07D466C617069` `00` `01` `05` `64484...A304B436B3D`   | Client requests to evaluate `transport.start()` |
 | Server | `F07D466C617069` `01` `01` `05` `00` `6741524C4343343D` | Server responds, indicating a result of `8` |
 | Client | `F07D466C617069` `00` `01` `01` `6741524C4143343D`      | Client disconnects with a code of `0` |
 | Server | `F07D466C617069` `01` `01` `01` `6741524C4143343D`      | Server acknowledges disconnect |
