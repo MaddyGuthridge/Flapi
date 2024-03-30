@@ -205,8 +205,8 @@ def start_ipython_shell():
 @click.option('-v', '--verbose', count=True)
 def repl(
     shell: Optional[str] = None,
-    req_port: str = consts.DEFAULT_REQ_PORT,
-    res_port: str = consts.DEFAULT_RES_PORT,
+    req: str = consts.DEFAULT_REQ_PORT,
+    res: str = consts.DEFAULT_RES_PORT,
     timeout: float = cli_consts.CONNECTION_TIMEOUT,
     verbose: int = 0,
 ):
@@ -217,7 +217,7 @@ def repl(
     print(f"Python version: {sys.version}")
 
     # Set up the connection
-    status = enable(req_port, res_port)
+    status = enable(req, res)
 
     if not status:
         status = wait_for_connection(timeout)
