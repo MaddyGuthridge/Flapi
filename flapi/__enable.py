@@ -4,11 +4,12 @@
 Code for initializing/closing Flapi
 """
 import logging
+import random
 import mido  # type: ignore
 from typing import Protocol, Generic, TypeVar, Optional
 from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
 from . import _consts as consts
-from .__context import set_context, pop_context, FlapiContext
+from .__context import set_context, get_context, pop_context, FlapiContext
 from .__comms import fl_exec, hello, version_query, poll_for_message
 from .__decorate import restore_original_functions, add_wrappers
 from .errors import FlapiPortError, FlapiConnectionError, FlapiVersionError
@@ -113,24 +114,26 @@ def enable(
     functions_backup = add_wrappers()
 
     # Register the context
-    set_context(FlapiContext(port, functions_backup))
+    set_context(FlapiContext(port, functions_backup, None))
 
-    return try_init()
+    return try_init(random.randrange(1, 0x7F))
 
 
-def init():
+def init(client_id: int):
     """
     Initialize Flapi, so that it can send commands to FL Studio.
     """
-    if not try_init():
+    if not try_init(client_id):
         raise FlapiConnectionError(
             "FL Studio did not connect to Flapi - is it running?")
 
 
-def try_init() -> bool:
+def try_init(client_id: int) -> bool:
     """
     Attempt to initialize Flapi, returning whether the operation was a success.
     """
+    assert get_context().client_id is None
+    get_context().client_id = client_id
     # Poll for any new messages from FL Studio and handle them as required
     poll_for_message()
     # Attempt to send a heartbeat message - if we get a response, we're already
@@ -139,6 +142,7 @@ def try_init() -> bool:
         setup_server()
         return True
     else:
+        get_context().client_id = None
         return False
 
 

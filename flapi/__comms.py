@@ -151,11 +151,14 @@ def hello() -> bool:
 
     If no data is received, this function returns `False`.
     """
-    log.debug("heartbeat")
+    client_id = get_context().client_id
+    log.debug(f"Attempt hello with {client_id=}")
+    assert client_id is not None
     start = time.time()
     try:
         send_msg(consts.SYSEX_HEADER + bytes([
             MessageOrigin.CLIENT,
+            client_id,
             MessageType.CLIENT_HELLO,
         ]))
         response = receive_message()
@@ -172,10 +175,12 @@ def version_query() -> tuple[int, int, int]:
     """
     Query and return the version of Flapi installed to FL Studio.
     """
+    client_id = get_context().client_id
+    assert client_id is not None
     log.debug("version_query")
     send_msg(
         consts.SYSEX_HEADER
-        + bytes([MessageOrigin.CLIENT, MessageType.VERSION_QUERY])
+        + bytes([MessageOrigin.CLIENT, client_id, MessageType.VERSION_QUERY])
     )
     response = receive_message()
     log.debug("version_query: got response")
@@ -193,10 +198,12 @@ def fl_exec(code: str) -> None:
     """
     Output Python code to FL Studio, where it will be executed.
     """
+    client_id = get_context().client_id
+    assert client_id is not None
     log.debug(f"fl_exec: {code}")
     send_msg(
         consts.SYSEX_HEADER
-        + bytes([MessageOrigin.CLIENT, MessageType.EXEC])
+        + bytes([MessageOrigin.CLIENT, client_id, MessageType.EXEC])
         + code.encode()
     )
     response = receive_message()
@@ -210,10 +217,12 @@ def fl_eval(expression: str) -> Any:
     Output a Python expression to FL Studio, where it will be evaluated, with
     the result being returned.
     """
+    client_id = get_context().client_id
+    assert client_id is not None
     log.debug(f"fl_eval: {expression}")
     send_msg(
         consts.SYSEX_HEADER
-        + bytes([MessageOrigin.CLIENT, MessageType.EVAL])
+        + bytes([MessageOrigin.CLIENT, client_id, MessageType.EVAL])
         + expression.encode()
     )
     response = receive_message()
@@ -229,9 +238,11 @@ def fl_print(text: str):
     """
     Print the given text to FL Studio's Python console.
     """
+    client_id = get_context().client_id
+    assert client_id is not None
     log.debug(f"fl_print (not expecting response): {text}")
     send_msg(
         consts.SYSEX_HEADER
-        + bytes([MessageOrigin.CLIENT, MessageType.STDOUT])
+        + bytes([MessageOrigin.CLIENT, client_id, MessageType.STDOUT])
         + b64encode(text.encode())
     )

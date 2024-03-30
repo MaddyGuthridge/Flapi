@@ -8,6 +8,7 @@ import code
 import click
 import sys
 import time
+import random
 from typing import Optional
 from traceback import print_exc
 import flapi
@@ -67,7 +68,7 @@ def wait_for_connection(max_wait: float) -> bool:
             return "   "
 
     start_time = time.time()
-    while not try_init():
+    while not try_init(random.randrange(1, 0x7F)):
         delta = time.time() - start_time
         if delta > max_wait:
             return False

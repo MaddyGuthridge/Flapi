@@ -25,6 +25,11 @@ class FlapiContext:
     we can set them back as required.
     """
 
+    client_id: int | None
+    """
+    Unique client ID for this instance of the Flapi client
+    """
+
 
 context: Optional[FlapiContext] = None
 """
