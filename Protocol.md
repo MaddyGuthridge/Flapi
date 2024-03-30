@@ -9,14 +9,15 @@ Version 1.0.
 
 Messages are all constructed in the following format:
 
-| Section                           | Meaning |
-|-----------------------------------|---------|
-| [Sysex header](#sysex-header)     | Begin MIDI system-exclusive message and identify the message type. |
-| [Message origin](#message-origin) | Shows the origin of the message. |
-| [Client ID](#client-id)           | Unique identifier for client. |
-| [Message type](#message-type)     | Type of message being sent. |
-| Additional data (optional)        | Data is dependent by message type, but often uses [status info](#status-info) and [Python encoded data](#python-encoded-data). |
-| Sysex end byte (`0xF7`)           | End of MIDI system-exclusive message. |
+| Section                           | Request/Response | Meaning |
+|-----------------------------------|------------------|---------|
+| [Sysex header](#sysex-header)     | Both             | Begin MIDI system-exclusive message and identify the message type. |
+| [Message origin](#message-origin) | Both             | Shows the origin of the message. |
+| [Client ID](#client-id)           | Both             | Unique identifier for client. |
+| [Message type](#message-type)     | Both             | Type of message being sent. |
+| [Status code](#status-code)       | Response         | Status info about response. |
+| Additional data (optional)        | Depends          | Data is dependent by message type, but often uses [Python encoded data](#python-encoded-data). This varies is status code is an `ERR` or `FAIL`. |
+| Sysex end byte (`0xF7`)           | Both             | End of MIDI system-exclusive message. |
 
 ### Sysex header
 
@@ -73,17 +74,17 @@ the following values. Other values are reserved for future Flapi versions.
 
 The following sections describe each of these message types.
 
-### Status info
+### Status code
 
 Many data formats for message types use a status code within the response,
 which indicates the results of the operation. This typically has additional
-data
+data.
 
 | Code   | Meaning | Typical additional data |
 |--------|---------|-------------------------|
-| `0x00` | Success | Usually [Python encoded data](#python-encoded-data), depending on the message type. |
+| `0x00` | Success | Determined by message type. |
 | `0x01` | An exception was raised during the operation | [Python encoded data](#python-encoded-data) of the exception. The exception is raised within the default client. |
-| `0x02` | The server failed to process the request | [Python encoded data](#python-encoded-data) of the error message. Default client raises this message as a `FlapiServerError`. |
+| `0x02` | The server failed to process the request | Base-64 encoded string of the error message. Default client raises this message as a `FlapiServerError`. |
 
 ## Python encoded data
 
@@ -97,7 +98,7 @@ In code, this can be represented as:
 
 ```py
 import pickle
-from base64 import b64encode
+from base64 import b64encode, b64decode
 
 data = { "a": 1, "b": 2, "c": 3 }
 
@@ -130,8 +131,22 @@ ID session.
 ### Client goodbye
 
 This message is sent when a client is exiting, and wants to disconnect from the
-Flapi server. As additional data, it contains an `int` exit code as
-[Python encoded data](#python-encoded-data).
+Flapi server. As additional data, it contains an `int` exit code, represented
+as as base-64 string to prevent illegal values for high exit codes.
+
+```py
+from base64 import b64encode, b64decode
+
+code = 130
+
+# Encode
+encoded = b64encode(str(code).encode())
+
+# Decode
+decoded = int(b64decode(data).decode())
+
+assert code == decoded
+```
 
 The server will respond with an identical reply. The default Flapi client
 (provided by this library) raises a `FlapiClientExit` exception when this
@@ -159,12 +174,11 @@ be used to execute statements, not expressions.
 
 #### Exec request data
 
-[Python encoded data](#python-encoded-data) containing a string with code to
-execute.
+A base-64 string containing the code to execute.
 
 #### Exec response data
 
-[Status info](#status-info). For success, no data is given.
+No data is given on success.
 
 ### Eval
 
@@ -174,12 +188,12 @@ to evaluate expressions, not statements.
 
 #### Eval request data
 
-[Python encoded data](#python-encoded-data) containing a string with code to
-evaluate.
+A base-64 string containing the code to execute.
 
 #### Eval response data
 
-[Status info](#status-info). For success, the return value of `eval` is given.
+The return value of the call to `eval` as
+[Python encoded data](#python-encoded-data).
 
 ### Stdout
 
@@ -187,8 +201,7 @@ This message is sent from the server to the client to notify it of `stdout`
 originating from FL Studio's console. This can be sent at any time, and so
 clients should be prepared to handle it at any point when receiving a message.
 
-It contains [Python encoded data](#python-encoded-data) of the string that was
-printed to stdout.
+Additional data is a base-64 string of the content written to `stdout`.
 
 When sent from the client, it is printed to FL Studio's console, and no
 response is given.
