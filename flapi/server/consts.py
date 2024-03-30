@@ -152,9 +152,15 @@ DEVICE_ENQUIRY_RESPONSE = bytes([
 ])
 
 
-DEFAULT_PORT_NAME = "Flapi"
+DEFAULT_REQ_PORT = "Flapi Request"
 """
 MIDI port to use/create for sending requests to FL Studio
+"""
+
+
+DEFAULT_RES_PORT = "Flapi Response"
+"""
+MIDI port to use/create for receiving responses from FL Studio
 """
 
 

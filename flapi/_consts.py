@@ -3,6 +3,7 @@
 
 Constants used by Flapi
 """
+from enum import IntEnum
 
 VERSION = (0, 4, 1)
 """
@@ -26,126 +27,102 @@ SYSEX_HEADER = bytes([
     0x69,  # 'i'
 ])
 """
-Header for Sysex messages sent by Flapi
+Header for Sysex messages sent by Flapi, excluding the `0xF0` status byte
 """
 
-MSG_FROM_CLIENT = 0x00
-"""
-Message originates from the Flapi client (library)
-"""
 
-MSG_FROM_SERVER = 0x01
-"""
-Message originates from Flapi server (FL Studio)
-"""
+class MessageOrigin(IntEnum):
+    """
+    Origin of a Flapi message
+    """
+    CLIENT = 0x00
+    """
+    Message originates from the Flapi client (library)
+    """
 
-MSG_TYPE_HEARTBEAT = 0x00
-"""
-Heartbeat message - this is used to check whether FL Studio is running the
-script.
+    INTERNAL = 0x02
+    """
+    Message internal to Flapi server (communication between ports in FL Studio)
+    """
 
-No extra data associated with this message type.
-"""
+    SERVER = 0x01
+    """
+    Message originates from Flapi server (FL Studio)
+    """
 
-MSG_TYPE_VERSION_QUERY = 0x01
-"""
-Query the server version - this is used to ensure that the server is running
-a matching version of Flapi, so that there aren't any bugs with communication.
 
-## Request data
+class MessageType(IntEnum):
+    """
+    Type of a Flapi message
+    """
 
-No extra data
+    CLIENT_HELLO = 0x00
+    """
+    Hello message, used to connect to the client
+    """
 
-## Response data
+    CLIENT_GOODBYE = 0x01
+    """
+    Message from server instructing client to exit. Used so that we can have a
+    working `exit` function when using the server-side REPL, and to cleanly
+    disconnect from the server.
+    """
 
-3 bytes, each with a version number
+    SERVER_GOODBYE = 0x02
+    """
+    Message from server notifying client that it is shutting down.
+    """
 
-* major
-* minor
-* release
-"""
+    VERSION_QUERY = 0x03
+    """
+    Query the server version - this is used to ensure that the server is
+    running a matching version of Flapi, so that there aren't any bugs with
+    communication.
+    """
 
-MSG_TYPE_EXEC = 0x02
-"""
-Exec message - this is used to run an `exec` command in FL Studio, with no
-return type (just a success, or an exception raised).
+    EXEC = 0x04
+    """
+    Exec message - this is used to run an `exec` command in FL Studio, with no
+    return type (just a success, or an exception raised).
+    """
 
-## Request data
+    EVAL = 0x05
+    """
+    Eval message - this is used to run an `eval` command in FL Studio, where
+    the value that it produces is returned.
+    """
 
-encoded string: data to execute
+    STDOUT = 0x06
+    """
+    Message contains text to write into stdout.
+    """
 
-## Response data
 
-status: MSG_STATUS_OK or MSG_STATUS_ERR, then
+class MessageStatus(IntEnum):
+    """
+    Status of a Flapi message
+    """
+    OK = 0x00
+    """
+    Message was processed correctly.
+    """
 
-if status is MSG_STATUS_ERR, the `repr()` of the exception is encoded.
-Otherwise, there is no other data.
-"""
+    ERR = 0x01
+    """
+    Processing of message raised an exception.
+    """
 
-MSG_TYPE_EVAL = 0x03
-"""
-Eval message - this is used to run an `eval` command in FL Studio, where the
-value that it produces is returned.
+    FAIL = 0x02
+    """
+    The message could not be processed
 
-## Request data
+    The error message is attached in the remaining bytes.
+    """
 
-encoded string: data to execute
-
-## Response data
-
-status: MSG_STATUS_OK or MSG_STATUS_ERR, then
-
-if status is MSG_STATUS_ERR, the `repr()` of the exception is encoded.
-Otherwise, the `repr()` of the return value is encoded.
-"""
-
-MSG_TYPE_STDOUT = 0x04
-"""
-Message contains text to write into stdout
-"""
-
-MSG_TYPE_EXIT = 0x05
-"""
-Message from server instructing client to exit. Used so that we can have a
-working `exit` function when using the server-side REPL.
-
-Associated data is an exit code, as an ASCII-encoded string (since otherwise
-certain exit codes could break the MIDI spec)
-"""
-
-MSG_TYPE_NAMES = {
-    MSG_TYPE_HEARTBEAT: "heartbeat",
-    MSG_TYPE_VERSION_QUERY: "version query",
-    MSG_TYPE_EXEC: "exec",
-    MSG_TYPE_EVAL: "eval",
-    MSG_TYPE_STDOUT: "stdout",
-    MSG_TYPE_EXIT: "exit",
-}
-"""
-Names of message types
-"""
-
-MSG_STATUS_OK = 0x00
-"""
-Message was processed correctly.
-"""
-
-MSG_STATUS_ERR = 0x01
-"""
-Processing of message raised an exception.
-"""
-
-MSG_STATUS_FAIL = 0x02
-"""
-The message could not be processed
-
-The error message is attached in the remaining bytes.
-"""
 
 DEVICE_ENQUIRY_MESSAGE = bytes([
     # 0xF0 - begin sysex (omitted by Mido)
     0x7E,  # Universal sysex message
-    # FIXME: This is 0x7F on MacOS
     0x00,  # Device ID (assume zero?)
     0x06,  # General information
     0x01,  # Identity request
@@ -175,9 +152,15 @@ DEVICE_ENQUIRY_RESPONSE = bytes([
 ])
 
 
-DEFAULT_PORT_NAME = "Flapi"
+DEFAULT_REQ_PORT = "Flapi Request"
 """
 MIDI port to use/create for sending requests to FL Studio
+"""
+
+
+DEFAULT_RES_PORT = "Flapi Response"
+"""
+MIDI port to use/create for receiving responses from FL Studio
 """
 
 

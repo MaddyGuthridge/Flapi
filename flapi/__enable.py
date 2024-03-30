@@ -9,7 +9,7 @@ from typing import Protocol, Generic, TypeVar, Optional
 from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
 from . import _consts as consts
 from .__context import set_context, pop_context, FlapiContext
-from .__comms import fl_exec, heartbeat, version_query, poll_for_message
+from .__comms import fl_exec, hello, version_query, poll_for_message
 from .__decorate import restore_original_functions, add_wrappers
 from .errors import FlapiPortError, FlapiConnectionError, FlapiVersionError
 
@@ -22,6 +22,7 @@ T = TypeVar('T', BaseInput, BaseOutput, covariant=True)
 
 class OpenPortFn(Protocol, Generic[T]):
     """Function that opens a Mido port"""
+
     def __call__(self, *, name: str, virtual: bool = False) -> T:
         ...
 
@@ -54,7 +55,10 @@ def open_port(
     return None
 
 
-def enable(port_name: str = consts.DEFAULT_PORT_NAME) -> bool:
+def enable(
+    req_port: str = consts.DEFAULT_REQ_PORT,
+    res_port: str = consts.DEFAULT_RES_PORT,
+) -> bool:
     """
     Enable Flapi, connecting it to the given MIDI ports
 
@@ -69,37 +73,41 @@ def enable(port_name: str = consts.DEFAULT_PORT_NAME) -> bool:
       will need to call `init()` once FL Studio is running and configured
       correctly.
     """
-    log.info(f"Enable Flapi client on port '{port_name}'")
+    log.info(f"Enable Flapi client on ports '{req_port}', '{res_port}'")
     # First, connect to all the MIDI ports
-    inputs = mido.get_input_names()  # type: ignore
-    outputs = mido.get_output_names()  # type: ignore
+    res_ports = mido.get_input_names()  # type: ignore
+    req_ports = mido.get_output_names()  # type: ignore
 
-    log.info(f"Available inputs are: {inputs}")
-    log.info(f"Available outputs are: {outputs}")
+    log.info(f"Available request ports are: {req_ports}")
+    log.info(f"Available response ports are: {res_ports}")
 
     try:
-        res = open_port(port_name, inputs, mido.open_input)  # type: ignore
+        res = open_port(res_port, res_ports, mido.open_input)  # type: ignore
     except Exception:
         log.exception("Error when connecting to input")
         raise
     try:
-        req = open_port(port_name, outputs, mido.open_output)  # type: ignore
+        req = open_port(req_port, req_ports, mido.open_output)  # type: ignore
     except Exception:
         log.exception("Error when connecting to output")
         raise
 
     if res is None or req is None:
         try:
-            port = mido.open_ioport(  # type: ignore
-                name=port_name,
+            req = mido.open_output(  # type: ignore
+                name=req_port,
+                virtual=True,
+            )
+            res = mido.open_input(  # type: ignore
+                name=res_port,
                 virtual=True,
             )
         except NotImplementedError as e:
             # Port could not be opened
             log.exception("Could not open create new port")
-            raise FlapiPortError(port_name) from e
-    else:
-        port = IOPort(res, req)
+            raise FlapiPortError((req_port, res_port)) from e
+
+    port = IOPort(res, req)
 
     # Now decorate all of the API functions
     functions_backup = add_wrappers()
@@ -127,7 +135,7 @@ def try_init() -> bool:
     poll_for_message()
     # Attempt to send a heartbeat message - if we get a response, we're already
     # connected
-    if heartbeat():
+    if hello():
         setup_server()
         return True
     else:

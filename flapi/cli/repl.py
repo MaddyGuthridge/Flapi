@@ -16,7 +16,7 @@ from flapi import (
     init,
     try_init,
     disable,
-    heartbeat,
+    hello,
     fl_exec,
     fl_eval,
     fl_print,
@@ -38,7 +38,7 @@ SHELL_SCOPE = {
     "enable": enable,
     "init": init,
     "disable": disable,
-    "heartbeat": heartbeat,
+    "heartbeat": hello,
     "fl_exec": fl_exec,
     "fl_eval": fl_eval,
     "fl_print": fl_print,
@@ -184,11 +184,16 @@ def start_ipython_shell():
     default=None,
 )
 @click.option(
-    "-p",
-    "--port",
+    "--req",
     type=str,
-    help="The name of the MIDI port to connect to",
-    default=consts.DEFAULT_PORT_NAME,
+    help="The name of the MIDI port to send requests on",
+    default=consts.DEFAULT_REQ_PORT,
+)
+@click.option(
+    "--res",
+    type=str,
+    help="The name of the MIDI port to receive responses on",
+    default=consts.DEFAULT_RES_PORT,
 )
 @click.option(
     "-t",
@@ -200,7 +205,8 @@ def start_ipython_shell():
 @click.option('-v', '--verbose', count=True)
 def repl(
     shell: Optional[str] = None,
-    port: str = consts.DEFAULT_PORT_NAME,
+    req_port: str = consts.DEFAULT_REQ_PORT,
+    res_port: str = consts.DEFAULT_RES_PORT,
     timeout: float = cli_consts.CONNECTION_TIMEOUT,
     verbose: int = 0,
 ):
@@ -211,7 +217,7 @@ def repl(
     print(f"Python version: {sys.version}")
 
     # Set up the connection
-    status = enable(port)
+    status = enable(req_port, res_port)
 
     if not status:
         status = wait_for_connection(timeout)

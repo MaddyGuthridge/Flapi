@@ -12,7 +12,7 @@ Remotely control FL Studio using the MIDI Controller Scripting API.
 ```
 """
 from .__enable import enable, init, try_init, disable
-from .__comms import heartbeat, fl_exec, fl_eval, fl_print
+from .__comms import hello, fl_exec, fl_eval, fl_print
 from . import errors
 from ._consts import VERSION
 
@@ -27,7 +27,7 @@ __all__ = [
     "init",
     "try_init",
     "disable",
-    "heartbeat",
+    "hello",
     "fl_exec",
     "fl_eval",
     "fl_print",

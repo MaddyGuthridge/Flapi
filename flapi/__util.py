@@ -3,7 +3,9 @@
 
 Helper functions
 """
-from typing import Any, Union
+import pickle
+from base64 import b64decode
+from typing import Any
 
 
 def bytes_to_str(msg: bytes) -> str:
@@ -13,17 +15,11 @@ def bytes_to_str(msg: bytes) -> str:
     return f"{repr([hex(i) for i in msg])} ({repr(msg)})"
 
 
-def try_eval(source: Union[str, bytes]) -> Any:
+def decode_python_object(data: bytes) -> Any:
     """
-    Evaluate the given source code, but raise a sane exception if it fails
+    Encode Python object to send to the client
     """
-    if isinstance(source, bytes):
-        source = source.decode()
-    try:
-        return eval(source)
-    except Exception as e:
-        raise ValueError(
-            f"Unable to evaluate code {repr(source)}, got error {repr(e)}")
+    return pickle.loads(b64decode(data))
 
 
 def format_fn_params(args, kwargs):
