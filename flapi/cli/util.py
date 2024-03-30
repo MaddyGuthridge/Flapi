@@ -41,8 +41,8 @@ def output_dir(data_dir: Path) -> Path:
         "FL Studio", "Settings", "Hardware", "Flapi Server")
 
 
-def script_dir() -> Path:
+def server_dir() -> Path:
     """
     Return the current location of the Flapi server script
     """
-    return Path(__file__).parent.parent.joinpath("script")
+    return Path(__file__).parent.parent.joinpath("server")

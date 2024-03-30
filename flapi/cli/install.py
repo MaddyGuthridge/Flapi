@@ -7,7 +7,7 @@ import click
 from shutil import copytree, rmtree
 from pathlib import Path
 from . import consts
-from .util import yn_prompt, output_dir, script_dir
+from .util import yn_prompt, output_dir, server_dir
 
 
 @click.command()
@@ -45,7 +45,7 @@ def install(data_dir: Path, yes: bool = False):
         rmtree(output_location)
 
     # Determine where we are, so we can locate the script folder
-    script_location = script_dir()
+    script_location = server_dir()
 
     # Now copy the script folder to the output folder
     copytree(script_location, output_location)
