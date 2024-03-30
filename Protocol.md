@@ -190,6 +190,9 @@ clients should be prepared to handle it at any point when receiving a message.
 It contains [Python encoded data](#python-encoded-data) of the string that was
 printed to stdout.
 
+When sent from the client, it is printed to FL Studio's console, and no
+response is given.
+
 ## Example
 
 To help clarify, here is an example demonstrating the basic functionality of
