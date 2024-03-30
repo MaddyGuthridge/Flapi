@@ -16,6 +16,7 @@ Messages are all constructed in the following format:
 | [Client ID](#client-id)           | Unique identifier for client. |
 | [Message type](#message-type)     | Type of message being sent. |
 | Additional data (optional)        | Data is dependent by message type, but often uses [status info](#status-info) and [Python encoded data](#python-encoded-data). |
+| Sysex end byte (`0xF7`)           | End of MIDI system-exclusive message. |
 
 ### Sysex header
 
