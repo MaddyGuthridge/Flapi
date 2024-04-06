@@ -1,6 +1,6 @@
-# name=Flapi Respond
+# name=Flapi Response
 # supportedDevices=Flapi Response
-# receiveFrom=Flapi Receive
+# receiveFrom=Flapi Request
 """
 # Flapi / Server / Flapi Respond
 
@@ -19,22 +19,44 @@ except ImportError:
     pass
 
 
-def OnSysEx(msg: 'FlMidiMsg'):
+# def print_msg(name: str, msg: bytes):
+#     print(f"{name}: {[hex(b) for b in msg]}")
+
+
+def OnSysEx(event: 'FlMidiMsg'):
+
+    header = event.sysex[1:len(SYSEX_HEADER)+1]  # Sysex header
+    # print_msg("Header", header)
+    # Remaining sysex data
+    sysex_data = event.sysex[len(SYSEX_HEADER)+1:]
+    # print_msg("Data", sysex_data)
+
     # Ignore events that don't target the respond script
-    if not msg.sysex.startswith(SYSEX_HEADER):
+    if header != SYSEX_HEADER:
+        print("Header no match")
         return
-    sysex = msg.sysex.removeprefix(SYSEX_HEADER)
 
     # Check message origin
-    if sysex[0] != MessageOrigin.INTERNAL:
+    if sysex_data[0] != MessageOrigin.INTERNAL:
+        print("Origin")
         return
 
     # Forward message back to client
+    # print_msg(
+    #     "Result",
+    #     (
+    #         bytes([0xF0])
+    #         + SYSEX_HEADER
+    #         + bytes([MessageOrigin.SERVER])
+    #         + sysex_data[1:]
+    #     )
+    # )
+
     device.midiOutSysex(
-        SYSEX_HEADER
+        bytes([0xF0])
+        + SYSEX_HEADER
         + bytes([MessageOrigin.SERVER])
-        + sysex[1:]
-        # + bytes([0xF7])
+        + sysex_data[1:]
     )
 
 
@@ -43,7 +65,8 @@ def OnDeInit():
     Send server goodbye message
     """
     device.midiOutSysex(
-        SYSEX_HEADER
+        bytes([0xF0])
+        + SYSEX_HEADER
         + bytes(MessageOrigin.SERVER)
         # Target all clients by giving 0x00 client ID
         + bytes([0x00])

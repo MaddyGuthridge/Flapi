@@ -52,7 +52,8 @@ class FlapiResponse:
 
     def fail(self, type: MessageType, info: str):
         send_sysex(
-            SYSEX_HEADER
+            bytes([0xF0])
+            + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([type])
@@ -63,19 +64,23 @@ class FlapiResponse:
 
     def client_hello(self):
         send_sysex(
-            SYSEX_HEADER
+            bytes([0xF0])
+            + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([MessageType.CLIENT_HELLO])
+            + bytes([MessageStatus.OK])
             + bytes([0xF7])
         )
 
     def client_goodbye(self, exit_code: int):
         send_sysex(
-            SYSEX_HEADER
+            bytes([0xF0])
+            + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([MessageType.CLIENT_GOODBYE])
+            + bytes([MessageStatus.OK])
             + encode_python_object(exit_code)
             + bytes([0xF7])
         )
@@ -84,10 +89,12 @@ class FlapiResponse:
 
     def version_query(self, version_info: tuple[int, int, int]):
         send_sysex(
-            SYSEX_HEADER
+            bytes([0xF0])
+            + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([MessageType.VERSION_QUERY])
+            + bytes([MessageStatus.OK])
             + bytes(version_info)
             + bytes([0xF7])
         )
@@ -124,7 +131,8 @@ class FlapiResponse:
             response_data = bytes()
 
         send_sysex(
-            SYSEX_HEADER
+            bytes([0xF0])
+            + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([MessageType.EXEC])
@@ -164,7 +172,8 @@ class FlapiResponse:
         data: Exception | str | Any,
     ):
         send_sysex(
-            SYSEX_HEADER
+            bytes([0xF0])
+            + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([MessageType.EVAL])
@@ -175,10 +184,12 @@ class FlapiResponse:
 
     def stdout(self, content: str):
         send_sysex(
-            SYSEX_HEADER
+            bytes([0xF0])
+            + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([MessageType.STDOUT])
+            + bytes([MessageStatus.OK])
             + encode_python_object(content)
             + bytes([0xF7])
         )

@@ -7,7 +7,7 @@ import logging
 import random
 import mido  # type: ignore
 from typing import Protocol, Generic, TypeVar, Optional
-from mido.ports import BaseOutput, BaseInput, IOPort  # type: ignore
+from mido.ports import BaseOutput, BaseInput  # type: ignore
 from . import _consts as consts
 from .__context import set_context, get_context, pop_context, FlapiContext
 from .__comms import fl_exec, hello, version_query, poll_for_message
@@ -108,13 +108,11 @@ def enable(
             log.exception("Could not open create new port")
             raise FlapiPortError((req_port, res_port)) from e
 
-    port = IOPort(res, req)
-
     # Now decorate all of the API functions
     functions_backup = add_wrappers()
 
     # Register the context
-    set_context(FlapiContext(port, functions_backup, None))
+    set_context(FlapiContext(req, res, functions_backup, None))
 
     return try_init(random.randrange(1, 0x7F))
 
@@ -193,7 +191,8 @@ def disable():
     """
     # Close all the ports
     ctx = pop_context()
-    ctx.port.close()
+    ctx.req_port.close()
+    ctx.res_port.close()
 
     # Then restore the functions
     restore_original_functions(ctx.functions_backup)

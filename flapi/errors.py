@@ -80,6 +80,17 @@ class FlapiServerError(Exception):
         )
 
 
+class FlapiServerExit(Exception):
+    """
+    The Flapi server exited.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            "The Flapi server exited, likely because FL Studio was closed."
+        )
+
+
 class FlapiClientError(Exception):
     """
     An unexpected error occurred on the client side.

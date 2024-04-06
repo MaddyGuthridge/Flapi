@@ -19,6 +19,7 @@ from .errors import (
     FlapiInvalidMsgError,
     FlapiServerError,
     FlapiClientError,
+    FlapiServerExit,
 )
 
 
@@ -30,7 +31,7 @@ def send_msg(msg: bytes):
     Send a message to FL Studio
     """
     mido_msg = MidoMsg("sysex", data=msg)
-    get_context().port.send(mido_msg)
+    get_context().req_port.send(mido_msg)
 
 
 def handle_stdout(output: str):
@@ -62,6 +63,13 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
     ):
         return None
 
+    # Handle other clients (prevent us from receiving their messages)
+    if (
+        msg.startswith(consts.SYSEX_HEADER)
+        and msg.removeprefix(consts.SYSEX_HEADER)[1] != get_context().client_id
+    ):
+        return None
+
     # Handle FL Studio stdout
     if msg.removeprefix(consts.SYSEX_HEADER)[1] == MessageType.STDOUT:
         text = b64decode(msg.removeprefix(consts.SYSEX_HEADER)[3:]).decode()
@@ -76,8 +84,12 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
         log.info(f"Received exit command with code {code}")
         raise SystemExit(code)
 
-    # Normal processing
-    return msg[len(consts.SYSEX_HEADER) + 1:]
+    # Handle server disconnect
+    if msg.removeprefix(consts.SYSEX_HEADER)[1] == MessageType.SERVER_GOODBYE:
+        raise FlapiServerExit()
+
+    # Normal processing (remove bytes for header, origin and client ID)
+    return msg[len(consts.SYSEX_HEADER) + 2:]
 
 
 def assert_response_is_ok(msg: bytes, expected_msg_type: MessageType):
@@ -111,7 +123,8 @@ def poll_for_message() -> Optional[bytes]:
     Poll for new MIDI messages from FL Studio
     """
     ctx = get_context()
-    if (msg := ctx.port.receive(block=False)) is not None:
+    if (msg := ctx.res_port.receive(block=False)) is not None:
+        print([hex(b) for b in msg.bytes()])
         # If there was a message, do pre-handling of message
         # Make sure to remove the start and end bits to simplify processing
         msg = handle_received_message(bytes(msg.bytes()[1:-1]))
@@ -204,7 +217,7 @@ def fl_exec(code: str) -> None:
     send_msg(
         consts.SYSEX_HEADER
         + bytes([MessageOrigin.CLIENT, client_id, MessageType.EXEC])
-        + code.encode()
+        + b64encode(code.encode())
     )
     response = receive_message()
     log.debug("fl_exec: got response")
@@ -223,7 +236,7 @@ def fl_eval(expression: str) -> Any:
     send_msg(
         consts.SYSEX_HEADER
         + bytes([MessageOrigin.CLIENT, client_id, MessageType.EVAL])
-        + expression.encode()
+        + b64encode(expression.encode())
     )
     response = receive_message()
     log.debug("fl_eval: got response")

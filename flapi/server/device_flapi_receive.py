@@ -1,4 +1,4 @@
-# name=Flapi Receive
+# name=Flapi Request
 # supportedDevices=Flapi Request
 """
 # Flapi / Server / Flapi Receive
@@ -44,17 +44,18 @@ def OnInit():
         f"Device assigned: {bool(device.isAssigned())}",
         f"FL Studio port number: {device.getPortNumber()}",
     ]))
-    capout.enable()
+    # capout.enable()
 
 
-def OnDeInit():
-    capout.disable()
+# def OnDeInit():
+#     capout.disable()
 
 
 connected_clients: set[int] = set()
 
 
 def client_hello(res: FlapiResponse, data: bytes):
+    print(f"Hello from {res.client_id}")
     if res.client_id in connected_clients:
         # Client ID already taken, take no action
         log.debug(f"Client tried to connect to in-use ID {res.client_id}")
@@ -78,6 +79,7 @@ def version_query(res: FlapiResponse, data: bytes):
 
 
 def fl_exec(res: FlapiResponse, data: bytes):
+    print(f"Data: {[hex(b) for b in data]}")
     statement = b64decode(data)
     try:
         # Exec in global scope so that the imports are remembered
@@ -120,6 +122,9 @@ message_handlers = {
 
 
 def OnSysEx(event: 'FlMidiMsg'):
+
+    print(f"Msg: {[hex(b) for b in event.sysex]}")
+
     header = event.sysex[1:len(consts.SYSEX_HEADER)+1]  # Sysex header
     # Remaining sysex data
     sysex_data = event.sysex[len(consts.SYSEX_HEADER)+1:-1]

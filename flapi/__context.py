@@ -14,9 +14,14 @@ if TYPE_CHECKING:
 
 @dataclass
 class FlapiContext:
-    port: BaseIOPort
+    req_port: BaseIOPort
     """
-    The Mido port that Flapi uses to communicate with FL Studio
+    The Mido port that Flapi uses to send requests to FL Studio
+    """
+
+    res_port: BaseIOPort
+    """
+    The Mido port that Flapi uses to receive responses from FL Studio
     """
 
     functions_backup: 'ApiCopyType'
