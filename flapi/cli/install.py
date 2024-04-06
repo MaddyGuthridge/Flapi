@@ -25,7 +25,12 @@ from .util import yn_prompt, output_dir, server_dir
     is_flag=True,
     help="Always overwrite the server installation"
 )
-def install(data_dir: Path, yes: bool = False):
+@click.option(
+    "--dev",
+    is_flag=True,
+    help="Install a live (development) server"
+)
+def install(data_dir: Path, yes: bool = False, dev: bool = False):
     """
     Install the Flapi server to FL Studio
     """
@@ -48,7 +53,10 @@ def install(data_dir: Path, yes: bool = False):
     script_location = server_dir()
 
     # Now copy the script folder to the output folder
-    copytree(script_location, output_location)
+    if dev:
+        output_location.symlink_to(script_location, True)
+    else:
+        copytree(script_location, output_location)
 
     print(
         "Success! Make sure you restart FL Studio so the server is registered"
