@@ -18,7 +18,7 @@ except ImportError:
     pass
 
 
-class CapoutBuffer(TextIOBase):  # type: ignore
+class CapoutBuffer(TextIOBase):
     """
     Custom buffer wrapping a StringIO, so that we can implement a callback
     whenever buffer is flushed, and flush it to the client.
@@ -26,6 +26,7 @@ class CapoutBuffer(TextIOBase):  # type: ignore
     This is probably awful design, but it seems to work so I'm keeping it until
     I feel like writing something nicer.
     """
+
     def __init__(self, callback: 'Callable[[str], None]') -> None:
         self.__callback = callback
         self.__buf = StringIO()
@@ -107,6 +108,7 @@ class Capout:
     """
     Capture stdout in FL Studio
     """
+
     def __init__(self, callback: 'Callable[[str], None]') -> None:
         self.enabled = False
         self.real_stdout = sys.stdout

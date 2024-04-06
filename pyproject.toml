@@ -42,7 +42,7 @@ packages = [{ include = "flapi" }]
 flapi = "flapi.__main__:cli"
 
 [tool.mypy]
-exclude = ['flapi/script/*']
+exclude = ['flapi/server/*']
 
 [tool.poetry.dependencies]
 python = "^3.9"
