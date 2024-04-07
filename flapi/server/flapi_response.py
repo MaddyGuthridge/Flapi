@@ -5,7 +5,8 @@ Class representing a MIDI message response in the format used by Flapi.
 """
 import device
 import pickle
-from typing import Any, Literal, overload
+import sys
+from typing import Any, Literal, overload, Self
 from base64 import b64encode, b64decode
 from consts import SYSEX_HEADER, MessageOrigin, MessageType, MessageStatus
 
@@ -18,7 +19,7 @@ def send_sysex(msg: bytes):
     """
     # capout.fl_print(f"MSG OUT -- {bytes_to_str(msg)}")
     if device.dispatchReceiverCount() == 0:
-        print("ERROR: No response device found")
+        print("ERROR: No response device found", file=sys.stderr)
     for i in range(device.dispatchReceiverCount()):
         device.dispatch(i, 0xF0, msg)
     # capout.fl_print("MSG OUT SUCCESS")
@@ -49,9 +50,18 @@ class FlapiResponse:
         Create a FlapiResponse
         """
         self.client_id = client_id
+        self.__messages: list[bytes] = []
 
-    def fail(self, type: MessageType, info: str):
-        send_sysex(
+    def send(self) -> None:
+        """
+        Send the required messages
+        """
+        for msg in self.__messages:
+            send_sysex(msg)
+        self.__messages.clear()
+
+    def fail(self, type: MessageType, info: str) -> Self:
+        self.__messages.append(
             bytes([0xF0])
             + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
@@ -61,9 +71,10 @@ class FlapiResponse:
             + b64encode(info.encode())
             + bytes([0xF7])
         )
+        return self
 
-    def client_hello(self):
-        send_sysex(
+    def client_hello(self) -> Self:
+        self.__messages.append(
             bytes([0xF0])
             + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
@@ -72,23 +83,25 @@ class FlapiResponse:
             + bytes([MessageStatus.OK])
             + bytes([0xF7])
         )
+        return self
 
-    def client_goodbye(self, exit_code: int):
-        send_sysex(
+    def client_goodbye(self, exit_code: int) -> Self:
+        self.__messages.append(
             bytes([0xF0])
             + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([MessageType.CLIENT_GOODBYE])
             + bytes([MessageStatus.OK])
-            + encode_python_object(exit_code)
+            + b64encode(str(exit_code).encode())
             + bytes([0xF7])
         )
+        return self
 
     # Server goodbye is handled externally in `device_flapi_respond.py`
 
-    def version_query(self, version_info: tuple[int, int, int]):
-        send_sysex(
+    def version_query(self, version_info: tuple[int, int, int]) -> Self:
+        self.__messages.append(
             bytes([0xF0])
             + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
@@ -98,9 +111,10 @@ class FlapiResponse:
             + bytes(version_info)
             + bytes([0xF7])
         )
+        return self
 
     @overload
-    def exec(self, status: Literal[MessageStatus.OK]):
+    def exec(self, status: Literal[MessageStatus.OK]) -> Self:
         ...
 
     @overload
@@ -108,7 +122,7 @@ class FlapiResponse:
         self,
         status: Literal[MessageStatus.ERR],
         exc_info: Exception,
-    ):
+    ) -> Self:
         ...
         ...
 
@@ -117,20 +131,20 @@ class FlapiResponse:
         self,
         status: Literal[MessageStatus.FAIL],
         exc_info: str,
-    ):
+    ) -> Self:
         ...
 
     def exec(
         self,
         status: MessageStatus,
         exc_info: Exception | str | None = None,
-    ):
+    ) -> Self:
         if status != MessageStatus.OK:
             response_data = encode_python_object(exc_info)
         else:
             response_data = bytes()
 
-        send_sysex(
+        self.__messages.append(
             bytes([0xF0])
             + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
@@ -140,13 +154,14 @@ class FlapiResponse:
             + response_data
             + bytes([0xF7])
         )
+        return self
 
     @overload
     def eval(
         self,
         status: Literal[MessageStatus.OK],
         data: Any,
-    ):
+    ) -> Self:
         ...
 
     @overload
@@ -154,7 +169,7 @@ class FlapiResponse:
         self,
         status: Literal[MessageStatus.ERR],
         data: Exception,
-    ):
+    ) -> Self:
         ...
         ...
 
@@ -163,15 +178,15 @@ class FlapiResponse:
         self,
         status: Literal[MessageStatus.FAIL],
         data: str,
-    ):
+    ) -> Self:
         ...
 
     def eval(
         self,
         status: MessageStatus,
         data: Exception | str | Any,
-    ):
-        send_sysex(
+    ) -> Self:
+        self.__messages.append(
             bytes([0xF0])
             + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
@@ -181,15 +196,17 @@ class FlapiResponse:
             + encode_python_object(data)
             + bytes([0xF7])
         )
+        return self
 
-    def stdout(self, content: str):
-        send_sysex(
+    def stdout(self, content: str) -> Self:
+        self.__messages.append(
             bytes([0xF0])
             + SYSEX_HEADER
             + bytes([MessageOrigin.INTERNAL])
             + bytes([self.client_id])
             + bytes([MessageType.STDOUT])
             + bytes([MessageStatus.OK])
-            + encode_python_object(content)
+            + b64encode(content.encode())
             + bytes([0xF7])
         )
+        return self

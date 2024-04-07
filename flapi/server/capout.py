@@ -13,7 +13,7 @@ except ImportError:
     # This is the module in FL Studio for some reason
     from _io import StringIO, _TextIOBase as TextIOBase  # type: ignore
 try:
-    from typing import Optional, Callable
+    from typing import Optional, Callable, Self
 except ImportError:
     pass
 
@@ -113,6 +113,19 @@ class Capout:
         self.enabled = False
         self.real_stdout = sys.stdout
         self.fake_stdout = CapoutBuffer(callback)
+        self.target = 0
+
+    def __call__(self, target: int) -> Self:
+        self.target = target
+        return self
+
+    def __enter__(self) -> None:
+        self.enable()
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.flush()
+        self.disable()
+        self.target = 0
 
     def flush(self) -> None:
         if self.enabled:

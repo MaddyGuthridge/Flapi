@@ -33,12 +33,10 @@ def OnSysEx(event: 'FlMidiMsg'):
 
     # Ignore events that don't target the respond script
     if header != SYSEX_HEADER:
-        print("Header no match")
         return
 
     # Check message origin
     if sysex_data[0] != MessageOrigin.INTERNAL:
-        print("Origin")
         return
 
     # Forward message back to client
