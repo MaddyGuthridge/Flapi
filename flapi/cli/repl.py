@@ -17,7 +17,6 @@ from flapi import (
     init,
     try_init,
     disable,
-    hello,
     fl_exec,
     fl_eval,
     fl_print,
@@ -39,7 +38,6 @@ SHELL_SCOPE = {
     "enable": enable,
     "init": init,
     "disable": disable,
-    "heartbeat": hello,
     "fl_exec": fl_exec,
     "fl_eval": fl_eval,
     "fl_print": fl_print,
@@ -244,7 +242,7 @@ def repl(
         print("Then, run `init()` to create the connection.")
 
     print("Imported functions:")
-    print("enable, init, disable, heartbeat, fl_exec, fl_eval")
+    print(", ".join(SHELL_SCOPE.keys()))
 
     if shell == "python":
         return start_python_shell()
