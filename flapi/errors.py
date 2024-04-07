@@ -91,6 +91,15 @@ class FlapiServerExit(Exception):
         )
 
 
+class FlapiClientExit(SystemExit):
+    """
+    The flapi client requested to exit
+    """
+
+    def __init__(self, code: int) -> None:
+        super().__init__(code)
+
+
 class FlapiClientError(Exception):
     """
     An unexpected error occurred on the client side.

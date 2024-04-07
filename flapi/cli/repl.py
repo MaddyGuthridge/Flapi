@@ -137,6 +137,7 @@ def start_server_shell():
             line = input(">>> " if not len(lines) else "... ")
         except KeyboardInterrupt:
             if last_was_interrupted:
+                disable()
                 exit()
             else:
                 print("\nKeyboard interrupt. Press again to quit")

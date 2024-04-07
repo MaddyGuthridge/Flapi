@@ -10,7 +10,13 @@ from typing import Protocol, Generic, TypeVar, Optional
 from mido.ports import BaseOutput, BaseInput  # type: ignore
 from . import _consts as consts
 from .__context import set_context, get_context, pop_context, FlapiContext
-from .__comms import fl_exec, hello, version_query, poll_for_message
+from .__comms import (
+    fl_exec,
+    hello,
+    version_query,
+    poll_for_message,
+    client_goodbye,
+)
 from .__decorate import restore_original_functions, add_wrappers
 from .errors import FlapiPortError, FlapiConnectionError, FlapiVersionError
 
@@ -183,12 +189,20 @@ def version_check():
     # If we reach this point, the versions match
 
 
-def disable():
+def disable(code: int = 0):
     """
-    Disable Flapi, closing its MIDI ports and its connection to FL Studio
+    Disable Flapi, closing its MIDI ports and its connection to FL Studio.
 
     This restores the original functions for the FL Studio API.
+
+    ## Args
+
+    * `code` (`int`, optional): the exit code to relay to the server. Defaults
+      to `0`.
     """
+    # Send a client goodbye
+    client_goodbye(code)
+
     # Close all the ports
     ctx = pop_context()
     ctx.req_port.close()

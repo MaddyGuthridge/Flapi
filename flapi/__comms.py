@@ -20,6 +20,7 @@ from .errors import (
     FlapiServerError,
     FlapiClientError,
     FlapiServerExit,
+    FlapiClientExit,
 )
 
 
@@ -78,7 +79,7 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
     if remaining_msg[2] == MessageType.CLIENT_GOODBYE:
         code = int(b64decode(remaining_msg[3:]).decode())
         log.info(f"Received exit command with code {code}")
-        raise SystemExit(code)
+        raise FlapiClientExit(code)
 
     # Handle server disconnect
     if remaining_msg[2] == MessageType.SERVER_GOODBYE:
@@ -154,10 +155,8 @@ def receive_message() -> bytes:
 
 def hello() -> bool:
     """
-    Send a heartbeat message to FL Studio, and check whether we receive another
-    heartbeat in response.
-
-    If no data is received, this function returns `False`.
+    Send a "client hello" message to FL Studio to attempt to establish a
+    connection.
     """
     client_id = get_context().client_id
     log.debug(f"Attempt hello with {client_id=}")
@@ -177,6 +176,32 @@ def hello() -> bool:
     except FlapiTimeoutError:
         log.debug("heartbeat: failed")
         return False
+
+
+def client_goodbye(code: int) -> None:
+    """
+    Send a "client goodbye" message to FL Studio to close the connection.
+    """
+    client_id = get_context().client_id
+    log.debug(f"Attempt hello with {client_id=}")
+    assert client_id is not None
+    send_msg(
+        consts.SYSEX_HEADER
+        + bytes([
+            MessageOrigin.CLIENT,
+            client_id,
+            MessageType.CLIENT_GOODBYE,
+        ])
+        + b64encode(str(code).encode())
+    )
+    try:
+        res = receive_message()
+        # We should never reach this point, as receiving the message should
+        # have raised a SystemExit
+        log.critical(f"Failed to SystemExit -- instead received message {res}")
+        assert False
+    except FlapiClientExit:
+        return
 
 
 def version_query() -> tuple[int, int, int]:
