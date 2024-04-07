@@ -124,7 +124,6 @@ def poll_for_message() -> Optional[bytes]:
     """
     ctx = get_context()
     if (msg := ctx.res_port.receive(block=False)) is not None:
-        print([hex(b) for b in msg.bytes()])
         # If there was a message, do pre-handling of message
         # Make sure to remove the start and end bits to simplify processing
         msg = handle_received_message(bytes(msg.bytes()[1:-1]))
