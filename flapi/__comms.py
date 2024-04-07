@@ -56,40 +56,36 @@ def handle_received_message(msg: bytes) -> Optional[bytes]:
         log.debug('Received unrecognised message')
         raise FlapiInvalidMsgError(msg)
 
+    remaining_msg = msg.removeprefix(consts.SYSEX_HEADER)
+
     # Handle loopback (prevent us from receiving our own messages)
-    if (
-        msg.startswith(consts.SYSEX_HEADER)
-        and msg.removeprefix(consts.SYSEX_HEADER)[0] != MessageOrigin.SERVER
-    ):
+    if remaining_msg[0] != MessageOrigin.SERVER:
         return None
 
     # Handle other clients (prevent us from receiving their messages)
-    if (
-        msg.startswith(consts.SYSEX_HEADER)
-        and msg.removeprefix(consts.SYSEX_HEADER)[1] != get_context().client_id
-    ):
+    # We still accept client ID zero, since it targets all devices
+    if remaining_msg[1] not in [0, get_context().client_id]:
         return None
 
     # Handle FL Studio stdout
-    if msg.removeprefix(consts.SYSEX_HEADER)[1] == MessageType.STDOUT:
-        text = b64decode(msg.removeprefix(consts.SYSEX_HEADER)[3:]).decode()
+    if remaining_msg[2] == MessageType.STDOUT:
+        text = b64decode(remaining_msg[3:]).decode()
         log.debug(f"Received server stdout: {text}")
         handle_stdout(text)
         return None
 
     # Handle exit command
-    if msg.removeprefix(consts.SYSEX_HEADER)[1] == MessageType.CLIENT_GOODBYE:
-        code = int(
-            b64decode(msg.removeprefix(consts.SYSEX_HEADER)[3:]).decode())
+    if remaining_msg[2] == MessageType.CLIENT_GOODBYE:
+        code = int(b64decode(remaining_msg[3:]).decode())
         log.info(f"Received exit command with code {code}")
         raise SystemExit(code)
 
     # Handle server disconnect
-    if msg.removeprefix(consts.SYSEX_HEADER)[1] == MessageType.SERVER_GOODBYE:
+    if remaining_msg[2] == MessageType.SERVER_GOODBYE:
         raise FlapiServerExit()
 
     # Normal processing (remove bytes for header, origin and client ID)
-    return msg[len(consts.SYSEX_HEADER) + 2:]
+    return remaining_msg[2:]
 
 
 def assert_response_is_ok(msg: bytes, expected_msg_type: MessageType):
