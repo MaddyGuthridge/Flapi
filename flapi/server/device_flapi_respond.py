@@ -65,7 +65,7 @@ def OnDeInit():
     device.midiOutSysex(
         bytes([0xF0])
         + SYSEX_HEADER
-        + bytes(MessageOrigin.SERVER)
+        + bytes([MessageOrigin.SERVER])
         # Target all clients by giving 0x00 client ID
         + bytes([0x00])
         + bytes([MessageType.SERVER_GOODBYE])
