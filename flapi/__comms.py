@@ -198,7 +198,9 @@ def client_goodbye(code: int) -> None:
         res = receive_message()
         # We should never reach this point, as receiving the message should
         # have raised a SystemExit
-        log.critical(f"Failed to SystemExit -- instead received message {res}")
+        log.critical(
+            f"Failed to SystemExit -- instead received message {res!r}"
+        )
         assert False
     except FlapiClientExit:
         return
