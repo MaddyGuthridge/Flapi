@@ -7,6 +7,7 @@ or Python's integrated shell.
 import code
 import click
 import sys
+import os
 import time
 import random
 from typing import Optional
@@ -22,6 +23,7 @@ from flapi import (
     fl_print,
 )
 from flapi import _consts as consts
+from flapi.errors import FlapiServerExit
 from flapi.cli import consts as cli_consts
 from .util import handle_verbose
 try:
@@ -78,7 +80,9 @@ def wait_for_connection(max_wait: float) -> bool:
             end='\r',
         )
 
-    print("Connected to FL Studio")
+    # Yucky thing to ensure that we write all the way to the end of the line
+    msg = "Connected to FL Studio"
+    print(msg + ' ' * (os.get_terminal_size().columns - len(msg)))
     return True
 
 
@@ -118,6 +122,12 @@ def exec_lines(lines: list[str]) -> bool:
         else:
             res = fl_eval(source)
             print(repr(res))
+    except FlapiServerExit:
+        print(
+            "Error: the Flapi server exited, likely because FL Studio was "
+            "closed."
+        )
+        exit(1)
     except Exception:
         print_exc()
 
