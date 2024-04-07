@@ -24,11 +24,16 @@ $ flapi
 
 3. On Windows, install a virtual MIDI loopback tool such as
    [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) and use it
-   to create a virtual MIDI port named `Flapi`. On MacOS, Flapi is able to
-   create this MIDI port automatically, so this step is not required.
+   to create two virtual MIDI ports, named `Flapi Request` and
+   `Flapi Response`. On MacOS, Flapi is able to create these MIDI ports
+   automatically, so this step is not required.
 
 4. Start or restart FL Studio. The server should be loaded automatically, but
-   if not, you may need to set it up in FL Studio's MIDI settings.
+   if not, you may need to set it up in FL Studio's MIDI settings. To do this,
+   set each MIDI port to have a unique port number in the outputs section,
+   configure the input ports to match the port numbers of their corresponding
+   output ports, then assign the "Flapi Request" port to the "Flapi Request"
+   script and the "Flapi Response" port to the "Flapi Response" script.
 
 ## Usage
 
@@ -64,7 +69,7 @@ within FL Studio (as opposed to forwarding function data).
 $ flapi -s server
 >>> import sys
 >>> sys.version
-'3.9.1 (default, Oct 14 2021, 10:29:32) [MSC v.1929 64 bit (AMD64)]'
+'3.12.1 (tags/v3.12.1:2305ca5, Dec  7 2023, 22:03:25) [MSC v.1937 64 bit (AMD64)]'
 # It's running inside FL Studio!
 >>> print("Hello")
 Hello
