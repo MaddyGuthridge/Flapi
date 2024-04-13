@@ -42,7 +42,7 @@ capout = Capout(send_stdout)
 
 def OnInit():
     print("\n".join([
-        "Flapi server",
+        "Flapi request server",
         f"Server version: {'.'.join(str(n) for n in consts.VERSION)}",
         f"Device name: {device.getName()}",
         f"Device assigned: {bool(device.isAssigned())}",
@@ -97,7 +97,6 @@ def fl_exec(res: FlapiResponse, data: bytes):
     statement = b64decode(data)
     try:
         # Exec in global scope so that the imports are remembered
-        # TODO: Give each client separate global and local scopes
         exec(statement, connected_clients[res.client_id])
     except Exception as e:
         # Something went wrong, give the error
@@ -111,7 +110,6 @@ def fl_eval(res: FlapiResponse, data: bytes):
     expression = b64decode(data)
     try:
         # Exec in global scope so that the imports are remembered
-        # TODO: Give each client separate global and local scopes
         result = eval(expression, connected_clients[res.client_id])
     except Exception as e:
         # Something went wrong, give the error
@@ -161,10 +159,20 @@ def OnSysEx(event: 'FlMidiMsg'):
     handler = message_handlers.get(message_type)
 
     if handler is None:
-        return res.fail(message_type, f"Unknown message type {message_type}")
+        log.error(f"Unknown handler for message type {message_type}")
+        return res \
+            .fail(message_type, f"Unknown message type {message_type}") \
+            .send()
 
     # Capture stdout for the duration of the operation
-    with capout(client_id):
-        handler(res, data)
+    try:
+        with capout(client_id):
+            handler(res, data)
+    except Exception as e:
+        log.error(f"Unhandled error for handler {handler}", exc_info=e)
+        res.fail(
+            message_type,
+            f"Unhandled exception in {handler}: {type(e).__name__}: {e}",
+        )
 
     res.send()

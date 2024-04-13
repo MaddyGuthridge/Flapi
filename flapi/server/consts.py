@@ -5,7 +5,7 @@ Constants used by Flapi
 """
 from enum import IntEnum
 
-VERSION = (1, 0, 0)
+VERSION = (1, 0, 1)
 """
 The version of Flapi in the format (major, minor, revision)
 """

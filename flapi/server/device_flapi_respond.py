@@ -11,7 +11,7 @@ It attaches to the "Flapi Response" device and sends MIDI messages back to the
 Flapi client.
 """
 import device
-from consts import MessageOrigin, MessageType, SYSEX_HEADER
+from consts import MessageOrigin, MessageType, SYSEX_HEADER, VERSION
 
 try:
     from fl_classes import FlMidiMsg
@@ -19,12 +19,21 @@ except ImportError:
     pass
 
 
+def OnInit():
+    print("\n".join([
+        "Flapi response server",
+        f"Server version: {'.'.join(str(n) for n in VERSION)}",
+        f"Device name: {device.getName()}",
+        f"Device assigned: {bool(device.isAssigned())}",
+        f"FL Studio port number: {device.getPortNumber()}",
+    ]))
+
+
 # def print_msg(name: str, msg: bytes):
 #     print(f"{name}: {[hex(b) for b in msg]}")
 
 
 def OnSysEx(event: 'FlMidiMsg'):
-
     header = event.sysex[1:len(SYSEX_HEADER)+1]  # Sysex header
     # print_msg("Header", header)
     # Remaining sysex data
