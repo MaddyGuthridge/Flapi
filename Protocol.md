@@ -3,21 +3,22 @@
 The Flapi protocol is a simple protocol for communication between the Flapi
 server and Flapi clients.
 
-Version 1.0.
+Version 2.0
 
 ## Message format
 
 Messages are all constructed in the following format:
 
-| Section                           | Request/Response | Meaning |
-|-----------------------------------|------------------|---------|
-| [Sysex header](#sysex-header)     | Both             | Begin MIDI system-exclusive message and identify the message type. |
-| [Message origin](#message-origin) | Both             | Shows the origin of the message. |
-| [Client ID](#client-id)           | Both             | Unique identifier for client. |
-| [Message type](#message-type)     | Both             | Type of message being sent. |
-| [Status code](#status-code)       | Response         | Status info about response. |
-| Additional data (optional)        | Depends          | Data is dependent by message type, but often uses [Python encoded data](#python-encoded-data). This varies is status code is an `ERR` or `FAIL`. |
-| Sysex end byte (`0xF7`)           | Both             | End of MIDI system-exclusive message. |
+| Section                                 | Request/Response | Meaning |
+|-----------------------------------------|------------------|---------|
+| [Sysex header](#sysex-header)           | Both             | Begin MIDI system-exclusive message and identify the message type. |
+| [Message origin](#message-origin)       | Both             | Shows the origin of the message. |
+| [Client ID](#client-id)                 | Both             | Unique identifier for client. |
+| [Continuation byte](#continuation-byte) | Both             | Whether this is message contains a continuation (ie is split across multiple messages). |
+| [Message type](#message-type)           | Both             | Type of message being sent. |
+| [Status code](#status-code)             | Response         | Status info about response. |
+| Additional data (optional)              | Depends          | Data is dependent by message type, but often uses [Python encoded data](#python-encoded-data). This varies is status code is an `ERR` or `FAIL`. |
+| Sysex end byte (`0xF7`)                 | Both             | End of MIDI system-exclusive message. |
 
 ### Sysex header
 
@@ -56,6 +57,25 @@ The ID `0x00` is reserved for universal messages, which target all clients.
 
 Upon receiving a request with a given client ID, the server will give a
 response with the same client ID.
+
+### Continuation byte
+
+In Windows, system-exclusive MIDI messages can't have an arbitrary length.
+Applications must instead pre-allocate a buffer, which the Windows API writes
+into. If the buffer is too small, the message may be discarded. Most
+applications only support a buffer size of `1024` bytes.
+
+To account for this, Flapi messages may be split across multiple MIDI messages.
+
+If a message is too long, it is split at `1000` bytes, and the continuation
+byte is set to `1`. The remaining message is sent as a separate message, which
+only contains the [sysex header](#sysex-header),
+[message origin](#message-origin), [client ID](#client-id) and continuation
+byte. These split messages must be continuous for a single client, and cannot
+be interleaved.
+
+The final MIDI message of a Flapi message should have its continuation byte set
+to `0` to indicate the end of the message.
 
 ### Message type
 
