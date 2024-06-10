@@ -3,7 +3,7 @@
 Flapi (pron. *"flappy"*) is a remote control server for FL Studio, using the
 MIDI Controller Scripting API. It allows you to execute Python code in FL
 Studio from outside of FL Studio by modifying functions in the
-[FL Studio API Stubs package](https://github.com/MiguelGuthridge/FL-Studio-API-Stubs)
+[FL Studio API Stubs package](https://github.com/MaddyGuthridge/FL-Studio-API-Stubs)
 to forward their calling information to the Flapi server, where they are
 executed, with their values returned to the client.
 
