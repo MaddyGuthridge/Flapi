@@ -38,6 +38,9 @@ class FlapiContextError(Exception):
     """
 
     def __init__(self) -> None:
+        """
+        Flapi wasn't initialised, so its context could not be loaded
+        """
         super().__init__(
             "Could not find Flapi context. Perhaps you haven't initialised "
             "Flapi by calling `flapi.enable()`."
@@ -55,11 +58,15 @@ class FlapiInvalidMsgError(ValueError):
     Flapi unexpectedly received a MIDI message that it could not process
     """
 
-    def __init__(self, msg: bytes) -> None:
+    def __init__(self, msg: bytes, context: str = "") -> None:
+        """
+        Flapi unexpectedly received a MIDI message that it could not process
+        """
         super().__init__(
             f"Flapi received a message that it didn't understand. Perhaps "
             f"another device is communicating on Flapi's MIDI port. Message "
-            f"received: {bytes_to_str(msg)}"
+            f"received: {bytes_to_str(msg)}\n"
+            + f"Context: {context}" if context else ""
         )
 
 
@@ -71,6 +78,11 @@ class FlapiServerError(Exception):
     """
 
     def __init__(self, msg: str) -> None:
+        """
+        An unexpected error occurred on the server side.
+
+        Ensure that the Flapi server and client have matching versions.
+        """
         super().__init__(
             f"An unexpected server error occurred due to a miscommunication. "
             f"Please ensure the Flapi server version matches that of the "
@@ -86,6 +98,9 @@ class FlapiServerExit(Exception):
     """
 
     def __init__(self) -> None:
+        """
+        The Flapi server exited.
+        """
         super().__init__(
             "The Flapi server exited, likely because FL Studio was closed."
         )
@@ -97,7 +112,10 @@ class FlapiClientExit(SystemExit):
     """
 
     def __init__(self, code: int) -> None:
-        super().__init__(code)
+        """
+        The flapi client requested to exit
+        """
+        super().__init__(code, "The flapi client requested to exit")
 
 
 class FlapiClientError(Exception):
@@ -108,6 +126,11 @@ class FlapiClientError(Exception):
     """
 
     def __init__(self, msg: str) -> None:
+        """
+        An unexpected error occurred on the client side.
+
+        Ensure that the Flapi server and client have matching versions.
+        """
         super().__init__(
             f"An unexpected client error occurred due to a miscommunication. "
             f"Please ensure the Flapi server version matches that of the "
