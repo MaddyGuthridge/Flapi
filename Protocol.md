@@ -16,8 +16,8 @@ Messages are all constructed in the following format:
 | [Client ID](#client-id)                 | Both             | Unique identifier for client. |
 | [Continuation byte](#continuation-byte) | Both             | Whether this is message contains a continuation (ie is split across multiple messages). |
 | [Message type](#message-type)           | Both             | Type of message being sent. |
-| [Status code](#status-code)             | Response         | Status info about response. |
-| Additional data (optional)              | Depends          | Data is dependent by message type, but often uses [Python encoded data](#python-encoded-data). This varies is status code is an `ERR` or `FAIL`. |
+| [Status code](#status-code)             | Both             | Status info about response. |
+| Additional data (optional)              | Depends          | Data is dependent by message type, but often uses a base-64 encoded string. |
 | Sysex end byte (`0xF7`)                 | Both             | End of MIDI system-exclusive message. |
 
 ### Sysex header
@@ -72,14 +72,14 @@ byte is set to `1`. The remaining message is sent as a separate message, which
 only contains the [sysex header](#sysex-header),
 [message origin](#message-origin), [client ID](#client-id) and continuation
 byte. These split messages must be continuous for a single client, and cannot
-be interleaved.
+be interleaved with messages of other types.
 
 The final MIDI message of a Flapi message should have its continuation byte set
 to `0` to indicate the end of the message.
 
 ### Message type
 
-The final common byte describes the type of message. The value can be one of
+The message type byte describes the type of message. The value can be one of
 the following values. Other values are reserved for future Flapi versions.
 
 | Value  | Meaning |
@@ -88,48 +88,22 @@ the following values. Other values are reserved for future Flapi versions.
 | `0x01` | [Client goodbye](#client-goodbye) |
 | `0x02` | [Server goodbye](#server-goodbye) |
 | `0x03` | [Version query](#version-query) |
-| `0x04` | [Exec](#exec) |
-| `0x05` | [Eval](#eval) |
+| `0x04` | [Register message type](#register-message-type) |
+| `0x05` | [Exec](#exec) |
 | `0x06` | [Stdout](#stdout) |
 
-The following sections describe each of these message types.
+Later sections describe each of these message types.
 
 ### Status code
 
-Many data formats for message types use a status code within the response,
-which indicates the results of the operation. This typically has additional
-data.
+The final byte is a status code, which is used to indicate the status of a
+response. In requests, this should be set to zero.
 
 | Code   | Meaning | Typical additional data |
 |--------|---------|-------------------------|
 | `0x00` | Success | Determined by message type. |
-| `0x01` | An exception was raised during the operation | [Python encoded data](#python-encoded-data) of the exception. The exception is raised within the default client. |
+| `0x01` | An exception was raised during the operation. | Base-64 encoded string of the error message. |
 | `0x02` | The server failed to process the request | Base-64 encoded string of the error message. Default client raises this message as a `FlapiServerError`. |
-
-## Python encoded data
-
-In order to transfer data between the client and the server, the following
-system is used.
-
-* Python objects are encoded using `pickle`
-* The resulting string is encoded using base-64
-
-In code, this can be represented as:
-
-```py
-import pickle
-from base64 import b64encode, b64decode
-
-data = { "a": 1, "b": 2, "c": 3 }
-
-# Encode
-encoded = b64encode(pickle.dumps(data))
-
-# Decode
-decoded = pickle.loads(b64decode(encoded))
-
-assert data == decoded
-```
 
 ### Client hello
 
@@ -140,9 +114,8 @@ This message type is the only message type to which the server may not respond.
 In particular, the server will not respond if that client ID is already in use
 by another active client. If a client does not receive a response, it should
 generate a new client ID and try again. If the client repeatedly doesn't
-receive a response, it is likely that FL Studio isn't running (or there are
-tens of thousands of clients connected to the Flapi server, meaning all
-available client IDs are taken).
+receive a response, it is likely that FL Studio isn't running (or all device
+IDs are taken).
 
 If the connection is accepted, the server will give an empty response targeted
 to the newly connected client. This means the server has registered that client
@@ -186,11 +159,50 @@ This message is sent by clients to query the version of the Flapi server.
 The server will respond with 3 bytes as the message data:
 `(major, minor, revision)`.
 
+### Register message type
+
+This message is sent by clients to register a new type of message. This message
+type is handled by the server by setting up a new handler for a message.
+
+This can be used to inject code into the Flapi server, to allow for clients to
+gain deeper control over FL Studio, and to save on repeated operations.
+
+The default client uses this functionality to register a `pickle-eval` message to
+evaluate data and encode the results using Pickle.
+
+### Interface for message handlers
+
+Message handler functions should match the given interface:
+
+```py
+def message_handler(
+    client_id: int,
+    status_code: int,
+    msg_data: Optional[bytes],
+) -> int | tuple[int, bytes]:
+    ...
+```
+
+Where:
+
+* `client_id` is the ID of the client that sent the request
+* `status_code` is the incoming status code.
+* `msg_data` is the full message data, if provided. Otherwise, the message data
+  is `None`. Note that if the data was split across multiple messages, it will
+  be joined before calling this function.
+* Return type is `int` for status code, and optionally `bytes` for response
+  data. Note that if the response needs to be split across multiple messages,
+  this will be handled internally by the server.
+
+#### Register message type request data
+
+A base-64 string containing the definition of the message handler function.
+The function must be named `message_handler`.
+
 ### Exec
 
 This message is sent by clients, and instructs the server to `exec` code inside
-FL Studio. Unlike `eval`, `exec` does not produce a return value, and so should
-be used to execute statements, not expressions.
+FL Studio.
 
 #### Exec request data
 
@@ -198,22 +210,8 @@ A base-64 string containing the code to execute.
 
 #### Exec response data
 
-No data is given on success.
-
-### Eval
-
-This message is sent by clients, and instructs the server to `eval` code inside
-FL Studio. Unlike `exec`, `eval` produces a return value, and so should be used
-to evaluate expressions, not statements.
-
-#### Eval request data
-
-A base-64 string containing the code to execute.
-
-#### Eval response data
-
-The return value of the call to `eval` as
-[Python encoded data](#python-encoded-data).
+No data is given on success. In order to get return data, programs should
+define an `eval` message type handler.
 
 ### Stdout
 
@@ -234,15 +232,15 @@ the protocol.
 Messages are shown as a list of bytes in hexadecimal, with spaces used to
 show different sections of the message.
 
-| Origin | Message                                                 | Meaning |
-|--------|---------------------------------------------------------|---------|
-| Client | `F07D466C617069` `00` `01` `00`                         | Client requests to connect using client ID `01` |
-| Server | `F07D466C617069` `01` `01` `00`                         | Server responds, accepting the connection |
-| Client | `F07D466C617069` `00` `01` `03`                         | Client requests server version information |
-| Server | `F07D466C617069` `01` `01` `03` `010000`                | Server responds, saying it is using version `1.0.0` |
-| Client | `F07D466C617069` `00` `01` `04` `61573...97964413D3D`   | Client requests to execute `import transport` |
-| Server | `F07D466C617069` `01` `01` `04` `00`                    | Server responds, indicating success |
-| Client | `F07D466C617069` `00` `01` `05` `64484...A304B436B3D`   | Client requests to evaluate `transport.start()` |
-| Server | `F07D466C617069` `01` `01` `05` `00` `6741524C4343343D` | Server responds, indicating a result of `8` |
-| Client | `F07D466C617069` `00` `01` `01` `6741524C4143343D`      | Client disconnects with a code of `0` |
-| Server | `F07D466C617069` `01` `01` `01` `6741524C4143343D`      | Server acknowledges disconnect |
+| Origin | Message                                                      | Meaning |
+|--------|--------------------------------------------------------------|---------|
+| Client | `F07D466C617069` `00` `01` `00` `00`                         | Client requests to connect using client ID `01` |
+| Server | `F07D466C617069` `01` `01` `00` `00`                         | Server responds, accepting the connection |
+| Client | `F07D466C617069` `00` `01` `00` `03`                         | Client requests server version information |
+| Server | `F07D466C617069` `01` `01` `00` `03` `010000`                | Server responds, saying it is using version `1.0.0` |
+| Client | `F07D466C617069` `00` `01` `00` `04` `61573...97964413D3D`   | Client requests to execute `import transport` |
+| Server | `F07D466C617069` `01` `01` `00` `04` `00`                    | Server responds, indicating success |
+| Client | `F07D466C617069` `00` `01` `00` `04` `64484...A304B436B3D`   | Client requests to execute `transport.start()` |
+| Server | `F07D466C617069` `01` `01` `00` `04` `00`                    | Server responds, indicating success |
+| Client | `F07D466C617069` `00` `01` `00` `01` `6741524C4143343D`      | Client disconnects with a code of `0` |
+| Server | `F07D466C617069` `01` `01` `00` `01` `6741524C4143343D`      | Server acknowledges disconnect |
