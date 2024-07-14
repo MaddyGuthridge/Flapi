@@ -31,6 +31,12 @@ Header for Sysex messages sent by Flapi, excluding the `0xF0` status byte
 """
 
 
+MAX_DATA_LEN = 1000
+"""
+Maximum number of bytes to use for additional message data.
+"""
+
+
 class MessageOrigin(IntEnum):
     """
     Origin of a Flapi message
