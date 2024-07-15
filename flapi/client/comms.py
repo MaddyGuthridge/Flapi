@@ -50,9 +50,9 @@ class FlapiComms:
         res_port: MidoPort,
     ) -> None:
         """
-        Flapi comms manager.
+        Flapi communications manager.
 
-        This class is responsible for sending and receiving
+        This class is responsible for exchanging MIDI messages with FL Studio.
         """
         self.req_port = req_port
         self.res_port = res_port

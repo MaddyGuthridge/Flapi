@@ -99,4 +99,5 @@ def connect_to_ports(
             log.exception("Could not open create new port")
             raise FlapiPortError((req_port, res_port)) from e
 
+    assert req is not None and res is not None
     return req, res
