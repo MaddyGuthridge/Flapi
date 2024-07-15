@@ -170,7 +170,9 @@ gain deeper control over FL Studio, and to save on repeated operations.
 The default client uses this functionality to register a `pickle-eval` message to
 evaluate data and encode the results using Pickle.
 
-### Interface for message handlers
+Note that the server should not share message handlers between clients.
+
+#### Interface for message handlers
 
 Message handler functions should match the given interface:
 
@@ -199,6 +201,11 @@ Where:
 A base-64 string containing the definition of the message handler function.
 The function must be named `message_handler`.
 
+#### Register message type response data
+
+A single byte, the message type number that should be used to communicate with
+this message hander.
+
 ### Exec
 
 This message is sent by clients, and instructs the server to `exec` code inside
@@ -210,8 +217,8 @@ A base-64 string containing the code to execute.
 
 #### Exec response data
 
-No data is given on success. In order to get return data, programs should
-define an `eval` message type handler.
+No data is given on success. In order to get return data, clients should
+register an `eval` message type handler.
 
 ### Stdout
 
