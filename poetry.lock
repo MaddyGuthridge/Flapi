@@ -87,13 +87,13 @@ tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipyth
 
 [[package]]
 name = "fl-studio-api-stubs"
-version = "37.0.0"
+version = "37.0.1"
 description = "Stub code, type definitions and documentation for the FL Studio Python API"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "fl_studio_api_stubs-37.0.0-py3-none-any.whl", hash = "sha256:48dcba4646142ae4ffc2d86f1772036cdffd0fe46f1d1a4e398216febdb3e67c"},
-    {file = "fl_studio_api_stubs-37.0.0.tar.gz", hash = "sha256:ca2e91913dcc7dad9795e4039f303c50d4654cbf9670335858f1c31a1e37e613"},
+    {file = "fl_studio_api_stubs-37.0.1-py3-none-any.whl", hash = "sha256:34725b81859edd3d424aa74f0673c1874b26bee33af32c513189792fed2cd1b7"},
+    {file = "fl_studio_api_stubs-37.0.1.tar.gz", hash = "sha256:e1f3e94d4d115fb2089804ad18166bb6b76dcd54ecd7548f77d6f2af29d5b0b4"},
 ]
 
 [[package]]
