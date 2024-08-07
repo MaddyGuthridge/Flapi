@@ -1,7 +1,7 @@
 """
-# Flapi / Client / Client
+# Flapi / Client / Base Client
 
-Class representing a Flapi client.
+Class implementing a basic Flapi client.
 """
 from base64 import b64decode, b64encode
 import logging
@@ -55,12 +55,14 @@ class RegisterMessageTypeServerHandler(Protocol):
     * `client_id`: ID of client.
     * `status_code`: status code sent by client.
     * `msg_data`: optional additional bytes.
+    * `scope`: local scope to use when executing arbitrary code.
     """
     def __call__(
         self,
         client_id: int,
         status_code: int,
         msg_data: Optional[bytes],
+        scope: dict[str, Any],
     ) -> int | tuple[int, bytes]:
         ...
 
@@ -136,6 +138,18 @@ class FlapiBaseClient:
         """
         Internal client ID. Used to determine if we are connected to FL Studio.
         """
+
+    def __del__(self) -> None:
+        # When this object is dropped, we should close our connection
+        try:
+            self.close()
+        except (FlapiConnectionError, FlapiTimeoutError) as e:
+            # If anything went wrong, silence the error (FL Studio probably
+            # closed)
+            log.warning(
+                f"Error when cleaning up connection to Flapi server: {e}"
+            )
+            pass
 
     @property
     def is_open(self) -> bool:

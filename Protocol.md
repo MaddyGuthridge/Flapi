@@ -181,6 +181,7 @@ def message_handler(
     client_id: int,
     status_code: int,
     msg_data: Optional[bytes],
+    scope: dict[str, Any],
 ) -> int | tuple[int, bytes]:
     ...
 ```
@@ -192,6 +193,8 @@ Where:
 * `msg_data` is the full message data, if provided. Otherwise, the message data
   is `None`. Note that if the data was split across multiple messages, it will
   be joined before calling this function.
+* `scope` is a dictionary containing a local scope that should be used when
+  executing arbitrary code.
 * Return type is `int` for status code, and optionally `bytes` for response
   data. Note that if the response needs to be split across multiple messages,
   this will be handled internally by the server.
