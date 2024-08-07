@@ -63,7 +63,7 @@ class FlapiComms:
     def send_message(
         self,
         client_id: int,
-        message_type: MessageType,
+        message_type: MessageType | int,
         status: MessageStatus,
         additional_data: bytes | None = None,
     ) -> None:

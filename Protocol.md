@@ -199,7 +199,6 @@ Where:
 #### Register message type request data
 
 A base-64 string containing the definition of the message handler function.
-The function must be named `message_handler`.
 
 #### Register message type response data
 

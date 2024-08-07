@@ -28,7 +28,7 @@ class FlapiMsg:
         self,
         origin: MessageOrigin,
         client_id: int,
-        msg_type: MessageType,
+        msg_type: MessageType | int,
         status_code: MessageStatus,
         additional_data: bytes | None = None,
         /,
@@ -39,16 +39,16 @@ class FlapiMsg:
         self,
         origin_data: MessageOrigin | bytes,
         client_id: int | None = None,
-        msg_type: MessageType | None = None,
+        msg_type: MessageType | int | None = None,
         status: MessageStatus | None = None,
         additional_data: bytes | None = None,
         /,
     ) -> None:
-        if isinstance(origin_data, (int, MessageOrigin)):
-            self.origin: MessageOrigin = MessageOrigin(origin_data)
+        if isinstance(origin_data, (MessageOrigin, int)):
+            self.origin: MessageOrigin = origin_data
             self.client_id: int = client_id  # type: ignore
             self.continuation = False
-            self.msg_type: MessageType = msg_type  # type: ignore
+            self.msg_type: MessageType | int = msg_type  # type: ignore
             self.status_code: MessageStatus = status  # type: ignore
             self.additional_data: bytes = (
                 additional_data
@@ -63,11 +63,11 @@ class FlapiMsg:
 
             # Extract data
             self.origin = MessageOrigin(origin_data[7])
-            self.client_id = origin_data[8]
+            self.client_id = bytes(origin_data)[8]
             # Continuation byte is used to control whether additional messages
             # can be appended
             self.continuation = bool(origin_data[9])
-            self.msg_type = MessageType(origin_data[10])
+            self.msg_type = bytes(origin_data)[10]
             self.status_code = MessageStatus(origin_data[11])
             self.additional_data = origin_data[12:-1]
             # Trim off the 0xF7 from the end      ^^

@@ -86,16 +86,15 @@ class MessageType(IntEnum):
     communication.
     """
 
-    EXEC = 0x04
+    REGISTER_MESSAGE_TYPE = 0x04
+    """
+    Register a new message type for the client.
+    """
+
+    EXEC = 0x05
     """
     Exec message - this is used to run an `exec` command in FL Studio, with no
     return type (just a success, or an exception raised).
-    """
-
-    EVAL = 0x05
-    """
-    Eval message - this is used to run an `eval` command in FL Studio, where
-    the value that it produces is returned.
     """
 
     STDOUT = 0x06

@@ -6,6 +6,7 @@ Class representing a Flapi client.
 from base64 import b64decode, b64encode
 import logging
 import time
+import inspect
 from typing import Any, Optional, Protocol, Self, cast, Callable
 from flapi import _consts as consts
 from flapi._consts import MessageOrigin, MessageType, MessageStatus
@@ -96,14 +97,22 @@ def assert_response_is_ok(msg: FlapiMsg, expected_msg_type: MessageType):
         raise FlapiServerError(b64decode(msg.additional_data).decode())
 
 
-class FlapiClient:
+class FlapiBaseClient:
+    """
+    An implementation of the core Flapi client functionality, as defined in the
+    Flapi Protocol documentation.
+
+    This is wrapped by the `FlapiClient`, which registers specialised handlers
+    to improve usability in Python.
+    """
+
     def __init__(
         self,
         stdout_callback: StdoutCallback = lambda text: print(text),
         unknown_msg_callback: UnknownMsgCallback = default_unknown_msg_callback
     ) -> None:
         """
-        Create a FlapiClient, ready to connect to FL Studio.
+        Create a FlapiBaseClient, ready to connect to FL Studio.
 
         Note that initially, this client does not attempt to connect to FL
         Studio. To do so, you should call `client.open()` then
@@ -378,4 +387,51 @@ class FlapiClient:
         * `Callable[[bytes], FlapiMsg]`: a function which can be used to send
           this type of message using this client.
         """
-        # TODO
+        function_source = inspect.getsource(server_side_handler)
+
+        self.comms.send_message(
+            self.client_id,
+            MessageType.REGISTER_MESSAGE_TYPE,
+            MessageStatus.OK,
+            b64encode(function_source.encode())
+        )
+        msg = self.__receive_and_dispatch()
+        assert_response_is_ok(msg, MessageType.REGISTER_MESSAGE_TYPE)
+
+        new_type = msg.additional_data[0]
+
+        def send_message(data: bytes) -> FlapiMsg:
+            """
+            Send a message using the new message type to the Flapi server
+
+            Args:
+                data (bytes): data to send
+
+            Returns:
+                FlapiMsg: response message
+            """
+            self.comms.send_message(
+                self.client_id,
+                new_type,
+                MessageStatus.OK,
+                data
+            )
+            return self.__receive_and_dispatch()
+
+        return send_message
+
+    def exec(self, code: str) -> None:
+        """
+        Execute the given code on the Flapi server
+
+        Args:
+            code (str): code to execute
+        """
+        self.comms.send_message(
+            self.client_id,
+            MessageType.EXEC,
+            MessageStatus.OK,
+            b64encode(code.encode())
+        )
+        msg = self.__receive_and_dispatch()
+        assert_response_is_ok(msg, MessageType.EXEC)
