@@ -22,9 +22,9 @@ from flapi import (
     fl_eval,
     fl_print,
 )
-from flapi import _consts as consts
-from flapi.errors import FlapiServerExit
-from flapi.cli import consts as cli_consts
+from .. import _consts as consts
+from ..errors import FlapiServerExit
+from . import consts as cli_consts
 from .util import handle_verbose
 try:
     import IPython
