@@ -1,7 +1,8 @@
 """
 # Flapi / Types / Message Handler
 """
-from typing import Any, Optional, Protocol
+from typing import Optional, Protocol
+from flapi.server.client_context import ClientContext
 
 
 class ServerMessageHandler(Protocol):
@@ -15,12 +16,17 @@ class ServerMessageHandler(Protocol):
     * `status_code`: status code sent by client.
     * `msg_data`: optional additional bytes.
     * `scope`: local scope to use when executing arbitrary code.
+
+    ## Returns of handler function
+
+    * `int` status code
+    * `bytes` additional data
     """
     def __call__(
         self,
         client_id: int,
         status_code: int,
         msg_data: Optional[bytes],
-        scope: dict[str, Any],
+        context: ClientContext,
     ) -> int | tuple[int, bytes]:
         ...

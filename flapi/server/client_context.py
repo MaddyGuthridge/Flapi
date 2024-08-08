@@ -1,11 +1,7 @@
 """
 # Flapi Server / Client Context
 """
-from typing import Any
-from flapi.types import ServerMessageHandler
-
-
-ScopeType = dict[str, Any]
+from flapi.types import ServerMessageHandler, ScopeType
 
 
 class ClientContext:
