@@ -11,11 +11,11 @@ a response via the "Flapi Respond" script.
 import logging
 import device
 from base64 import b64decode
-import consts
+import _consts
 from typing import Any
-from consts import MessageStatus, MessageOrigin, MessageType
+from _consts import MessageStatus, MessageOrigin, MessageType
 from capout import Capout
-from flapi_response import FlapiResponse
+from flapi_msg import FlapiMsg
 
 try:
     from fl_classes import FlMidiMsg
@@ -34,7 +34,14 @@ def send_stdout(text: str):
     Callback for Capout, sending stdout to the client console
     """
     # Target all devices
-    FlapiResponse(capout.target).stdout(text).send()
+    FlapiMsg(
+        MessageOrigin.SERVER,
+        capout.target,
+        MessageType.STDOUT,
+        MessageStatus.OK,
+
+    )
+    FlapiMsg(capout.target).stdout(text).send()
 
 
 capout = Capout(send_stdout)
@@ -43,7 +50,7 @@ capout = Capout(send_stdout)
 def OnInit():
     print("\n".join([
         "Flapi request server",
-        f"Server version: {'.'.join(str(n) for n in consts.VERSION)}",
+        f"Server version: {'.'.join(str(n) for n in _consts.VERSION)}",
         f"Device name: {device.getName()}",
         f"Device assigned: {bool(device.isAssigned())}",
         f"FL Studio port number: {device.getPortNumber()}",
@@ -90,7 +97,7 @@ def client_goodbye(res: FlapiResponse, data: bytes):
 
 
 def version_query(res: FlapiResponse, data: bytes):
-    res.version_query(consts.VERSION)
+    res.version_query(_consts.VERSION)
 
 
 def fl_exec(res: FlapiResponse, data: bytes):
@@ -134,12 +141,12 @@ message_handlers = {
 
 
 def OnSysEx(event: 'FlMidiMsg'):
-    header = event.sysex[1:len(consts.SYSEX_HEADER)+1]  # Sysex header
+    header = event.sysex[1:len(_consts.SYSEX_HEADER)+1]  # Sysex header
     # Remaining sysex data
-    sysex_data = event.sysex[len(consts.SYSEX_HEADER)+1:-1]
+    sysex_data = event.sysex[len(_consts.SYSEX_HEADER)+1:-1]
 
     # Ignore events that aren't Flapi messages
-    if header != consts.SYSEX_HEADER:
+    if header != _consts.SYSEX_HEADER:
         return
 
     message_origin = sysex_data[0]

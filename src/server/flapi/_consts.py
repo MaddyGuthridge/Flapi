@@ -31,6 +31,12 @@ Header for Sysex messages sent by Flapi, excluding the `0xF0` status byte
 """
 
 
+MAX_DATA_LEN = 1000
+"""
+Maximum number of bytes to use for additional message data.
+"""
+
+
 class MessageOrigin(IntEnum):
     """
     Origin of a Flapi message
@@ -80,16 +86,15 @@ class MessageType(IntEnum):
     communication.
     """
 
-    EXEC = 0x04
+    REGISTER_MESSAGE_TYPE = 0x04
+    """
+    Register a new message type for the client.
+    """
+
+    EXEC = 0x05
     """
     Exec message - this is used to run an `exec` command in FL Studio, with no
     return type (just a success, or an exception raised).
-    """
-
-    EVAL = 0x05
-    """
-    Eval message - this is used to run an `eval` command in FL Studio, where
-    the value that it produces is returned.
     """
 
     STDOUT = 0x06

@@ -11,7 +11,7 @@ It attaches to the "Flapi Response" device and sends MIDI messages back to the
 Flapi client.
 """
 import device
-from consts import MessageOrigin, MessageType, SYSEX_HEADER, VERSION
+from _consts import MessageOrigin, MessageType, SYSEX_HEADER, VERSION
 
 try:
     from fl_classes import FlMidiMsg
