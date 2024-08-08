@@ -5,9 +5,9 @@ Wrapper class for MIDI messages sent/received by Flapi.
 """
 from flapi import _consts as consts
 from flapi._consts import MessageType, MessageOrigin, MessageStatus
-from flapi.errors import FlapiInvalidMsgError
 from typing import overload
 import itertools as iter
+from .errors import FlapiInvalidMsgError
 
 
 class FlapiMsg:

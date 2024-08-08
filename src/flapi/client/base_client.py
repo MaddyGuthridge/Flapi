@@ -9,10 +9,11 @@ import time
 import inspect
 from typing import Any, Optional, Protocol, Self, cast, Callable
 from flapi import _consts as consts
+from flapi.types import ServerMessageHandler
 from flapi._consts import MessageOrigin, MessageType, MessageStatus
 import random
 
-from .flapi_msg import FlapiMsg
+from ..flapi_msg import FlapiMsg
 from .ports import connect_to_ports
 from .comms import FlapiComms
 from ..errors import (
@@ -45,26 +46,7 @@ class UnknownMsgCallback(Protocol):
         ...
 
 
-class RegisterMessageTypeServerHandler(Protocol):
-    """
-    Function to be executed on the Flapi server. This function will be called
-    whenever a message of this type is sent to the server.
 
-    ## Args of handler function
-
-    * `client_id`: ID of client.
-    * `status_code`: status code sent by client.
-    * `msg_data`: optional additional bytes.
-    * `scope`: local scope to use when executing arbitrary code.
-    """
-    def __call__(
-        self,
-        client_id: int,
-        status_code: int,
-        msg_data: Optional[bytes],
-        scope: dict[str, Any],
-    ) -> int | tuple[int, bytes]:
-        ...
 
 
 def default_unknown_msg_callback(msg: bytes) -> Any:
@@ -386,14 +368,14 @@ class FlapiBaseClient:
 
     def register_message_type(
         self,
-        server_side_handler: RegisterMessageTypeServerHandler,
+        server_side_handler: ServerMessageHandler,
     ) -> Callable[[bytes], FlapiMsg]:
         """
         Register a new message type on the server.
 
         ## Args
 
-        * server_side_handler (`RegisterMessageTypeServerHandler`): function to
+        * server_side_handler (`ServerMessageHandler`): function to
           declare on the server for handling this new message type.
 
         ## Returns

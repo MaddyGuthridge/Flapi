@@ -10,20 +10,16 @@ a response via the "Flapi Respond" script.
 """
 import logging
 import device
-from base64 import b64decode
-import _consts
-from typing import Any
-from _consts import MessageStatus, MessageOrigin, MessageType
+from base64 import b64decode, b64encode
+from flapi import _consts as consts
+from flapi._consts import MessageStatus, MessageOrigin, MessageType
 from capout import Capout
-from flapi_msg import FlapiMsg
+from flapi.flapi_msg import FlapiMsg
 
 try:
     from fl_classes import FlMidiMsg
 except ImportError:
     pass
-
-
-ScopeType = dict[str, Any]
 
 
 log = logging.getLogger(__name__)
@@ -34,14 +30,15 @@ def send_stdout(text: str):
     Callback for Capout, sending stdout to the client console
     """
     # Target all devices
-    FlapiMsg(
+    for msg in FlapiMsg(
         MessageOrigin.SERVER,
         capout.target,
         MessageType.STDOUT,
         MessageStatus.OK,
-
-    )
-    FlapiMsg(capout.target).stdout(text).send()
+        b64encode(text.encode()),
+    ).to_bytes():
+        # We should only have one receiver (at index 0)
+        device.dispatch(0, 0xF0, msg)
 
 
 capout = Capout(send_stdout)
@@ -50,136 +47,12 @@ capout = Capout(send_stdout)
 def OnInit():
     print("\n".join([
         "Flapi request server",
-        f"Server version: {'.'.join(str(n) for n in _consts.VERSION)}",
+        f"Server version: {'.'.join(str(n) for n in consts.VERSION)}",
         f"Device name: {device.getName()}",
         f"Device assigned: {bool(device.isAssigned())}",
         f"FL Studio port number: {device.getPortNumber()}",
     ]))
 
 
-class _Exit:
-    def __init__(self, target_client: int) -> None:
-        self.__target = target_client
-
-    def __call__(self, code: int = 0):
-        FlapiResponse(self.__target).client_goodbye(code).send()
-
-
-def make_client_globals(client_id: int) -> ScopeType:
-    """
-    Make unique global scope for a client
-    """
-    return globals().copy() | {
-        "exit": _Exit(client_id),
-    }
-
-
-connected_clients: dict[int, ScopeType] = {}
-
-
-def client_hello(res: FlapiResponse, data: bytes):
-    if res.client_id in connected_clients:
-        # Client ID already taken, take no action
-        log.debug(f"Client tried to connect to in-use ID {res.client_id}")
-        return
-    else:
-        res.client_hello()
-        connected_clients[res.client_id] = make_client_globals(res.client_id)
-        log.info(f"Client with ID {res.client_id} connected")
-
-
-def client_goodbye(res: FlapiResponse, data: bytes):
-    code = int(b64decode(data).decode())
-    connected_clients.pop(res.client_id)
-    log.info(
-        f"Client with ID {res.client_id} disconnected with code {code}")
-    res.client_goodbye(code)
-
-
-def version_query(res: FlapiResponse, data: bytes):
-    res.version_query(_consts.VERSION)
-
-
-def fl_exec(res: FlapiResponse, data: bytes):
-    statement = b64decode(data)
-    try:
-        # Exec in global scope so that the imports are remembered
-        exec(statement, connected_clients[res.client_id])
-    except Exception as e:
-        # Something went wrong, give the error
-        return res.exec(MessageStatus.ERR, e)
-
-    # Operation was a success, give response
-    return res.exec(MessageStatus.OK)
-
-
-def fl_eval(res: FlapiResponse, data: bytes):
-    expression = b64decode(data)
-    try:
-        # Exec in global scope so that the imports are remembered
-        result = eval(expression, connected_clients[res.client_id])
-    except Exception as e:
-        # Something went wrong, give the error
-        return res.eval(MessageStatus.ERR, e)
-
-    # Operation was a success, give response
-    return res.eval(MessageStatus.OK, result)
-
-
-def receive_stdout(res: FlapiResponse, data: bytes):
-    text = b64decode(data).decode()
-    capout.fl_print(text)
-
-
-message_handlers = {
-    MessageType.CLIENT_HELLO: client_hello,
-    MessageType.CLIENT_GOODBYE: client_goodbye,
-    MessageType.VERSION_QUERY: version_query,
-    MessageType.EXEC: fl_exec,
-    MessageType.EVAL: fl_eval,
-}
-
-
 def OnSysEx(event: 'FlMidiMsg'):
-    header = event.sysex[1:len(_consts.SYSEX_HEADER)+1]  # Sysex header
-    # Remaining sysex data
-    sysex_data = event.sysex[len(_consts.SYSEX_HEADER)+1:-1]
-
-    # Ignore events that aren't Flapi messages
-    if header != _consts.SYSEX_HEADER:
-        return
-
-    message_origin = sysex_data[0]
-
-    client_id = sysex_data[1]
-
-    res = FlapiResponse(client_id)
-
-    message_type = MessageType(sysex_data[2])
-
-    data = sysex_data[3:]
-
-    # Ignore messages from us, to prevent feedback
-    if message_origin != MessageOrigin.CLIENT:
-        return
-
-    handler = message_handlers.get(message_type)
-
-    if handler is None:
-        log.error(f"Unknown handler for message type {message_type}")
-        return res \
-            .fail(message_type, f"Unknown message type {message_type}") \
-            .send()
-
-    # Capture stdout for the duration of the operation
-    try:
-        with capout(client_id):
-            handler(res, data)
-    except Exception as e:
-        log.error(f"Unhandled error for handler {handler}", exc_info=e)
-        res.fail(
-            message_type,
-            f"Unhandled exception in {handler}: {type(e).__name__}: {e}",
-        )
-
-    res.send()
+    msg = FlapiMsg(event.sysex)

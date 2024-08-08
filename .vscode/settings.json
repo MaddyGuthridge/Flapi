@@ -3,5 +3,9 @@
         "Capout",
         "Flapi",
         "mido"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/src/server",
     ]
 }

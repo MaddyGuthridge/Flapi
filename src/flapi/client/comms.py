@@ -7,7 +7,7 @@ import time
 from flapi.types import MidoPort, MidoMsg
 from flapi import _consts as consts
 from flapi._consts import MessageType, MessageOrigin, MessageStatus
-from .flapi_msg import FlapiMsg
+from ..flapi_msg import FlapiMsg
 from ..errors import FlapiInvalidMsgError, FlapiTimeoutError
 
 
