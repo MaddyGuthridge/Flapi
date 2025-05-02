@@ -14,6 +14,13 @@ $ flapi
 # Hint message "Hello from Flapi!" is displayed in FL Studio's hint panel
 ```
 
+## Maintenance
+
+This project is currently unmaintained, with the latest code on the `main`
+branch being half-way through a refactor. To learn more about this decision,
+please have a read of [Unmaintained.md](./Unmaintained.md). Thank you for
+understanding.
+
 ## Setup
 
 1. Install the Flapi library using Pip, or any package manager of your choice.
