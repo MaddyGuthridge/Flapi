@@ -1,0 +1,8 @@
+# Rename this file to `dependabot.yml` to re-enable Dependabot
+
+version: 2
+updates:
+  - package-ecosystem: "pip" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
