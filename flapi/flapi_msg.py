@@ -28,6 +28,12 @@ class FlapiMsg:
     """
     Wrapper for Flapi messages, allowing for convenient access to their
     properties.
+
+    Two construction modes:
+    * `FlapiMsg(raw_bytes)` where `raw_bytes` is the full SysEx message (with
+      leading 0xF0 and trailing 0xF7).
+    * `FlapiMsg(origin, client_id, msg_type, status, additional_data)` to build
+      a message for sending.
     """
     @overload
     def __init__(
@@ -54,47 +60,59 @@ class FlapiMsg:
         origin_data: Union[MessageOrigin, bytes],
         client_id: Optional[int] = None,
         msg_type: Union[MessageType, int, None] = None,
-        status: Optional[MessageStatus] = None,
+        status_code: Optional[MessageStatus] = None,
         additional_data: Optional[bytes] = None,
         /,
     ) -> None:
+        # Build-from-fields path
         if isinstance(origin_data, (MessageOrigin, int)):
-            self.origin: MessageOrigin = origin_data
-            self.client_id: int = client_id  # type: ignore
-            self.continuation = False
-            self.msg_type: Union[MessageType, int] = msg_type  # type: ignore
-            self.status_code: MessageStatus = status  # type: ignore
+            if client_id is None or msg_type is None or status_code is None:
+                raise ValueError(
+                    "client_id, msg_type, and status_code must be provided when"
+                    " constructing FlapiMsg from fields"
+                )
+            self.origin: MessageOrigin = MessageOrigin(origin_data)
+            self.client_id: int = int(client_id)
+            self.continuation: bool = False
+            self.msg_type: Union[MessageType, int] = msg_type
+            self.status_code: MessageStatus = MessageStatus(status_code)
             self.additional_data: bytes = (
-                additional_data
-                if additional_data is not None
-                else bytes()
+                additional_data if additional_data is not None else bytes()
             )
-        else:
-            # Check header validity
-            header = origin_data[1:7]
-            if header != consts.SYSEX_HEADER:
-                raise FlapiInvalidMsgError(origin_data)
+            return
 
-            # Extract data
-            self.origin = MessageOrigin(origin_data[7])
-            self.client_id = bytes(origin_data)[8]
-            # Continuation byte is used to control whether additional messages
-            # can be appended
-            self.continuation = bool(origin_data[9])
-            self.msg_type = bytes(origin_data)[10]
-            self.status_code = MessageStatus(origin_data[11])
-            self.additional_data = origin_data[12:-1]
-            # Trim off the 0xF7 from the end      ^^
+        # Parse-from-bytes path
+        # Raw SysEx should include 0xF0 prefix and 0xF7 suffix
+        raw: bytes = origin_data
+        if len(raw) < 9:
+            # Must contain at least F0 + header + origin/client/cont/type/status + F7
+            raise FlapiInvalidMsgError(raw, "Message too short")
+
+        # Validate header
+        header = raw[1:1 + len(consts.SYSEX_HEADER)]
+        if header != consts.SYSEX_HEADER:
+            raise FlapiInvalidMsgError(raw)
+
+        try:
+            self.origin = MessageOrigin(raw[1 + len(consts.SYSEX_HEADER)])
+        except ValueError:
+            raise FlapiInvalidMsgError(raw, "Invalid origin")
+        self.client_id = raw[2 + len(consts.SYSEX_HEADER)]
+        self.continuation = bool(raw[3 + len(consts.SYSEX_HEADER)])
+        self.msg_type = raw[4 + len(consts.SYSEX_HEADER)]
+        try:
+            self.status_code = MessageStatus(raw[5 + len(consts.SYSEX_HEADER)])
+        except ValueError:
+            raise FlapiInvalidMsgError(raw, "Invalid status code")
+        # Remaining bytes excluding trailing 0xF7
+        self.additional_data = raw[6 + len(consts.SYSEX_HEADER):-1]
 
     def append(self, other: 'FlapiMsg') -> None:
         """
         Append another Flapi message to this message.
 
-        This works by merging the data bytes.
-
-        ## Args
-
-        * `other` (`FlapiMsg`): other message to append.
+        Used to recombine chunked messages. The current message must have the
+        continuation flag set. All metadata fields must match.
         """
         if not self.continuation:
             raise FlapiInvalidMsgError(
@@ -102,95 +120,40 @@ class FlapiMsg:
                 "Cannot append to FlapiMsg if continuation byte is not set",
             )
 
-        # Check other properties are the same
-        assert self.origin == other.origin
-        assert self.client_id == other.client_id
-        assert self.msg_type == other.msg_type
-        assert self.status_code == other.status_code
+        if not (
+            self.origin == other.origin
+            and self.client_id == other.client_id
+            and self.msg_type == other.msg_type
+            and self.status_code == other.status_code
+        ):
+            raise FlapiInvalidMsgError(b''.join(other.to_bytes()), "Mismatched chunk metadata")
 
-        self.continuation = other.continuation
+        # Merge data and adopt the continuation flag of the appended chunk
         self.additional_data += other.additional_data
+        self.continuation = other.continuation
 
     def to_bytes(self) -> List[bytes]:
         """
-        Convert the message into bytes, in preparation for being sent.
+        Convert the message into a list of SysEx data payloads (excluding the
+        leading 0xF0 and trailing 0xF7, which are typically added by the MIDI
+        library).
 
-        This automatically handles the splitting of MIDI messages.
-
-        Note that each message does not contain the leading 0xF0, or trailing
-        0xF7 required by sysex messages. This is because Mido adds these
-        automatically.
-
-        ## Returns
-
-        * `list[bytes]`: MIDI message(s) to send.
+        Handles chunking for payloads larger than `consts.MAX_DATA_LEN`.
+        Continuation byte semantics per protocol:
+        - 1 for all but the final chunk
+        - 0 for the final chunk
         """
-        msgs: List[bytes] = []
-
-        # Append in reverse, so we can easily detect the last element (which
-        # shouldn't have its "continuation" byte set)
-        first = True
-        for data in reversed(list(
-            batched(self.additional_data, consts.MAX_DATA_LEN)
-        )):
-            msgs.insert(0, bytes(
-                consts.SYSEX_HEADER
-                + bytes([
-                    self.origin,
-                    self.client_id,
-                    first,  # Continuation bit
-                    self.msg_type,
-                    self.status_code,
-                ])
-                + bytes(data)
-            ))
-            # Actually, `first` logic in previous code was:
-            # first = True (initial value)
-            # Loop reversed (so we process the LAST chunk first)
-            # If `first` is True, it means it is the last chunk of the message (end of data).
-            # In protocol: "The final MIDI message... should have its continuation byte set to 0"
-            # "If a message is too long... continuation byte is set to 1"
-            
-            # So if it is the last chunk (processed first here due to reversed), continuation should be 0.
-            # Wait, `bool(first)` converts True to 1. 
-            # If `first` is True (Last chunk), we want continuation = 0.
-            # If `first` is False (Not last chunk), we want continuation = 1.
-            
-            # The original code was:
-            # first = True
-            # for data in reversed(...):
-            #    ... bytes([..., first, ...])
-            #    first = False
-            
-            # If reversed:
-            # Chunk 3 (Last) -> first=True -> Cont=1 ?? INCORRECT.
-            # The original code had a bug or I am misinterpreting it.
-            
-            # Protocol says:
-            # "The final MIDI message ... continuation byte set to 0"
-            # "If a message is too long... continuation byte is set to 1"
-            
-            # So:
-            # Last chunk: 0
-            # Other chunks: 1
-            
-            # Let's fix this logic.
-            # We iterate chunks in normal order to be safe, or stick to reverse but fix logic.
-            pass
-        
-        # Let's rewrite the logic clearly.
-        chunks = list(batched(self.additional_data, consts.MAX_DATA_LEN))
+        data = self.additional_data if self.additional_data is not None else bytes()
+        chunks = list(batched(data, consts.MAX_DATA_LEN))
         if not chunks:
-             # Handle empty data case (e.g. Hello)
-             chunks = [b'']
-             
-        msgs = []
+            # Ensure at least one chunk is sent even for empty payloads
+            chunks = [b'']
+
+        msgs: List[bytes] = []
         for i, chunk in enumerate(chunks):
-            is_last = (i == len(chunks) - 1)
-            # Continuation is 1 if NOT last, 0 if last.
+            is_last = i == len(chunks) - 1
             continuation = 0 if is_last else 1
-            
-            msgs.append(bytes(
+            msgs.append(
                 consts.SYSEX_HEADER
                 + bytes([
                     self.origin,
@@ -200,6 +163,22 @@ class FlapiMsg:
                     self.status_code,
                 ])
                 + bytes(chunk)
-            ))
-            
+            )
         return msgs
+
+    @staticmethod
+    def reassemble(chunks: List['FlapiMsg']) -> 'FlapiMsg':
+        """
+        Reassemble a list of chunked FlapiMsg objects into a single message.
+
+        The list must be in the order received. Raises FlapiInvalidMsgError if
+        metadata does not align or if the final chunk has continuation=1.
+        """
+        if not chunks:
+            raise FlapiInvalidMsgError(b'', "No chunks provided")
+        base = chunks[0]
+        for nxt in chunks[1:]:
+            base.append(nxt)
+        if base.continuation:
+            raise FlapiInvalidMsgError(b''.join(base.to_bytes()), "Message incomplete (continuation still set)")
+        return base
