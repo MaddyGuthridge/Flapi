@@ -1,0 +1,3 @@
+{
+  "tests/integration/test_server_logic.py": true
+}
