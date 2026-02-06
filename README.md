@@ -78,6 +78,30 @@ $ flapi diag --verbose
 OK: Received CLIENT_HELLO response from FL Studio.
 ```
 
+## Troubleshooting
+
+1. Ports missing in FL Studio MIDI settings (macOS):
+   Run `flapi port-host` and keep it running while FL Studio is open, then
+   restart FL Studio. The ports only exist while the port-host process is
+   running.
+
+2. `flapi diag --verbose` fails to connect:
+   In FL Studio MIDI settings, ensure each output port has a unique port
+   number, each input port matches its corresponding output port number, and
+   the "Flapi Request" and "Flapi Response" scripts are assigned to their
+   matching ports.
+
+3. Script output shows `NameError: __file__ is not defined`:
+   Reinstall scripts with `flapi install` and restart FL Studio.
+
+4. Debug output shows "Not handled" for SYSEX:
+   Confirm the scripts are assigned to the correct ports and that the port
+   numbers match between inputs and outputs.
+
+5. Windows: ports missing:
+   Make sure loopMIDI (or equivalent) has two ports named exactly
+   `Flapi Request` and `Flapi Response`.
+
 ## Release Checklist
 
 1. Run tests: `pytest -q`

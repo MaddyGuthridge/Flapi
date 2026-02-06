@@ -4,7 +4,7 @@ version = "1.0.2"
 description = "Remotely control FL Studio using the MIDI Controller Scripting API"
 authors = [
     "Maddy Guthridge <hello@maddyguthridge.com>",
-    "Tyler Harden <tylerjharden@users.noreply.github.com>",
+    "Tyler Harden <root@tylerjharden.dev>",
 ]
 license = "MIT"
 readme = "README.md"
