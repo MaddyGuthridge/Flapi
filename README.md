@@ -26,14 +26,17 @@ understanding.
 1. Install the Flapi library using Pip, or any package manager of your choice.
    `pip install flapi`
 
-2. Install the Flapi server to FL Studio by running `flapi install`. If you
-   have changed your FL Studio user data folder, you will need to enter it.
+2. Install the Flapi server to FL Studio by running `flapi install`
+   (or `python -m flapi install`). If you have changed your FL Studio user
+   data folder, you will need to enter it.
 
-3. On Windows, install a virtual MIDI loopback tool such as
+3. Create MIDI ports:
+   On `macOS`, run the port host and keep it running while FL Studio is open:
+   `flapi port-host` (or `python -m flapi port-host`)
+   On `Windows`, install a virtual MIDI loopback tool such as
    [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html) and use it
    to create two virtual MIDI ports, named `Flapi Request` and
-   `Flapi Response`. On MacOS, Flapi is able to create these MIDI ports
-   automatically, so this step is not required.
+   `Flapi Response`.
 
 4. Start or restart FL Studio. The server should be loaded automatically, but
    if not, you may need to set it up in FL Studio's MIDI settings. To do this,
@@ -41,6 +44,9 @@ understanding.
    configure the input ports to match the port numbers of their corresponding
    output ports, then assign the "Flapi Request" port to the "Flapi Request"
    script and the "Flapi Response" port to the "Flapi Response" script.
+
+5. Optional sanity check (recommended):
+   `flapi diag --verbose` (or `python -m flapi diag --verbose`)
 
 ## Usage
 
@@ -65,6 +71,13 @@ $ flapi
 # FL Studio starts playback
 >>> transport.stop()
 # FL Studio stops playback
+```
+
+### Diagnostics
+
+```py
+$ flapi diag --verbose
+OK: Received CLIENT_HELLO response from FL Studio.
 ```
 
 #### Server-side execution

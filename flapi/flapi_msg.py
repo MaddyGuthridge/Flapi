@@ -82,30 +82,39 @@ class FlapiMsg:
             return
 
         # Parse-from-bytes path
-        # Raw SysEx should include 0xF0 prefix and 0xF7 suffix
+        # Raw SysEx may include 0xF0/0xF7 (FL Studio) or omit them (Mido data).
         raw: bytes = origin_data
-        if len(raw) < 9:
-            # Must contain at least F0 + header + origin/client/cont/type/status + F7
+        if not raw:
+            raise FlapiInvalidMsgError(raw, "Message too short")
+
+        has_f0 = raw[0] == 0xF0
+        has_f7 = raw[-1] == 0xF7
+
+        start = 1 if has_f0 else 0
+        end = (len(raw) - 1) if has_f7 else len(raw)
+
+        # Must contain at least header + origin/client/cont/type/status
+        if end - start < len(consts.SYSEX_HEADER) + 5:
             raise FlapiInvalidMsgError(raw, "Message too short")
 
         # Validate header
-        header = raw[1:1 + len(consts.SYSEX_HEADER)]
+        header = raw[start:start + len(consts.SYSEX_HEADER)]
         if header != consts.SYSEX_HEADER:
             raise FlapiInvalidMsgError(raw)
 
         try:
-            self.origin = MessageOrigin(raw[1 + len(consts.SYSEX_HEADER)])
+            self.origin = MessageOrigin(raw[start + len(consts.SYSEX_HEADER)])
         except ValueError:
             raise FlapiInvalidMsgError(raw, "Invalid origin")
-        self.client_id = raw[2 + len(consts.SYSEX_HEADER)]
-        self.continuation = bool(raw[3 + len(consts.SYSEX_HEADER)])
-        self.msg_type = raw[4 + len(consts.SYSEX_HEADER)]
+        self.client_id = raw[start + 1 + len(consts.SYSEX_HEADER)]
+        self.continuation = bool(raw[start + 2 + len(consts.SYSEX_HEADER)])
+        self.msg_type = raw[start + 3 + len(consts.SYSEX_HEADER)]
         try:
-            self.status_code = MessageStatus(raw[5 + len(consts.SYSEX_HEADER)])
+            self.status_code = MessageStatus(raw[start + 4 + len(consts.SYSEX_HEADER)])
         except ValueError:
             raise FlapiInvalidMsgError(raw, "Invalid status code")
         # Remaining bytes excluding trailing 0xF7
-        self.additional_data = raw[6 + len(consts.SYSEX_HEADER):-1]
+        self.additional_data = raw[start + 5 + len(consts.SYSEX_HEADER):end]
 
     def append(self, other: 'FlapiMsg') -> None:
         """

@@ -4,7 +4,7 @@
 Simple script for installing the Flapi server into FL Studio
 """
 import click
-from shutil import copytree, rmtree
+from shutil import copytree, rmtree, copy2
 from pathlib import Path
 from . import consts
 from .util import yn_prompt, output_dir, server_dir
@@ -52,11 +52,23 @@ def install(data_dir: Path, yes: bool = False, dev: bool = False):
     # Determine where we are, so we can locate the script folder
     script_location = server_dir()
 
-    # Now copy the script folder to the output folder
+    # Create output directory
+    output_location.mkdir(parents=True, exist_ok=True)
+
+    # Bundle: device scripts at root, plus flapi package
+    device_receive = script_location.joinpath("device_flapi_receive.py")
+    device_respond = script_location.joinpath("device_flapi_respond.py")
+    flapi_pkg = script_location.joinpath("flapi")
+
     if dev:
-        output_location.symlink_to(script_location, True)
+        # Symlink for live development
+        output_location.joinpath("device_flapi_receive.py").symlink_to(device_receive)
+        output_location.joinpath("device_flapi_respond.py").symlink_to(device_respond)
+        output_location.joinpath("flapi").symlink_to(flapi_pkg, True)
     else:
-        copytree(script_location, output_location)
+        copy2(device_receive, output_location.joinpath("device_flapi_receive.py"))
+        copy2(device_respond, output_location.joinpath("device_flapi_respond.py"))
+        copytree(flapi_pkg, output_location.joinpath("flapi"))
 
     print(
         "Success! Make sure you restart FL Studio so the server is registered"

@@ -5,7 +5,7 @@ Constants used by Flapi
 """
 from enum import IntEnum
 
-VERSION = (1, 0, 1)
+VERSION = (1, 0, 2)
 """
 The version of Flapi in the format (major, minor, revision)
 """
@@ -167,6 +167,7 @@ DEFAULT_RES_PORT = "Flapi Response"
 """
 MIDI port to use/create for receiving responses from FL Studio
 """
+
 
 
 FL_MODULES = [

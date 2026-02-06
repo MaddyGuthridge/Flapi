@@ -44,18 +44,10 @@ def open_port(
     attempt to create it
     """
     for curr_port_name in port_names:  # type: ignore
-        # If the only thing after it is a number, we are free to connect to it
-        # It seems that something appends these numbers to each MIDI device to
-        # make them more unique or something
+        # Accept any port containing the target name. On macOS, CoreMIDI
+        # endpoints may be suffixed, and we still want to connect.
         if port_name.lower() not in curr_port_name.lower():
             continue
-        try:
-            # If this works, it's a match
-            int(curr_port_name.replace(port_name, '').strip())
-        except Exception:
-            continue
-
-        # Connect to it
         return open(name=curr_port_name)  # type: ignore
 
     # If we reach this point, no match was found
@@ -100,19 +92,9 @@ def enable(
         raise
 
     if res is None or req is None:
-        try:
-            req = mido.open_output(  # type: ignore
-                name=req_port,
-                virtual=True,
-            )
-            res = mido.open_input(  # type: ignore
-                name=res_port,
-                virtual=True,
-            )
-        except NotImplementedError as e:
-            # Port could not be opened
-            log.exception("Could not open create new port")
-            raise FlapiPortError((req_port, res_port)) from e
+        # Port host is responsible for creating paired virtual ports.
+        # We only connect to existing ports here to avoid duplicates.
+        raise FlapiPortError((req_port, res_port))
 
     # Now decorate all of the API functions
     functions_backup = add_wrappers()

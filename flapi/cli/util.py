@@ -45,4 +45,5 @@ def server_dir() -> Path:
     """
     Return the current location of the Flapi server script
     """
-    return Path(__file__).parent.parent.joinpath("server")
+    # Root of flapi package (contains device_flapi_* scripts and flapi package)
+    return Path(__file__).parent.parent

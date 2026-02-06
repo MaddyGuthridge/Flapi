@@ -17,8 +17,18 @@ from typing import Optional, Dict, List, Tuple, Callable
 from base64 import b64decode, b64encode
 import pickle
 
-# Add the dir containing flapi to the PATH, so that imports work
-sys.path.append(str(Path(__file__).parent.parent))
+# Add the dir containing the bundled flapi package to the PATH.
+# FL Studio's script environment may not define __file__.
+try:
+    _script_dir = Path(__file__).parent
+except NameError:
+    try:
+        _script_dir = Path(device.getScriptPath())
+        if _script_dir.is_file():
+            _script_dir = _script_dir.parent
+    except Exception:
+        _script_dir = Path.cwd()
+sys.path.append(str(_script_dir))
 
 # These imports need lint ignores, since they depend on the path modification
 # above
@@ -40,6 +50,8 @@ except ImportError:  # pragma: no cover - FL Studio runtime only
 
 
 log = logging.getLogger(__name__)
+DEBUG_SYSEX = False
+_DEBUG_COUNT = 0
 
 
 def send_stdout(text: str):
@@ -54,7 +66,7 @@ def send_stdout(text: str):
         MessageStatus.OK,
         b64encode(text.encode()),
     ).to_bytes():
-        device.dispatch(0, 0xF0, msg)
+        device.dispatch(0, 0xF0, bytes([0xF0]) + msg + bytes([0xF7]))
 
 
 capout = Capout(send_stdout)
@@ -90,7 +102,8 @@ def _send_response(
         status,
         data,
     ).to_bytes():
-        device.dispatch(0, 0xF0, out)
+        # device.dispatch expects the full SysEx message including F0/F7.
+        device.dispatch(0, 0xF0, bytes([0xF0]) + out + bytes([0xF7]))
 
 
 def _cleanup_expired_chunks():
@@ -188,7 +201,15 @@ def exec_handler(
     if msg_data is None:
         return MessageStatus.FAIL, b64encode(b"No code provided")
 
-    code_str = b64decode(msg_data).decode()
+    try:
+        code_bytes = b64decode(msg_data, validate=True)
+        code_str = code_bytes.decode()
+    except Exception:
+        # Fallback for raw (non-base64) payloads
+        try:
+            code_str = msg_data.decode()
+        except Exception:
+            return MessageStatus.FAIL, b64encode(b"Invalid exec payload encoding")
 
     try:
         with capout(client_id):
@@ -200,6 +221,25 @@ def exec_handler(
         except Exception:
             err_bytes = pickle.dumps(RuntimeError(str(e)))
         return MessageStatus.ERR, b64encode(err_bytes)
+
+
+def stdout_handler(
+    client_id: int,
+    status_code: int,
+    msg_data: Optional[bytes],
+    context: ClientContext,
+) -> tuple[int, bytes]:
+    """
+    Print client-sent stdout to FL Studio's console.
+    """
+    if msg_data is None:
+        return MessageStatus.FAIL, b64encode(b"No stdout provided")
+    try:
+        text = b64decode(msg_data).decode()
+    except Exception:
+        return MessageStatus.FAIL, b64encode(b"Invalid stdout payload")
+    print(text, end="")
+    return MessageStatus.OK, b""
 
 
 def client_hello(
@@ -239,6 +279,7 @@ HANDLERS: Dict[int, Callable[[int, int, Optional[bytes], ClientContext], tuple[i
     MessageType.EXEC: exec_handler,
     MessageType.CLIENT_HELLO: client_hello,
     MessageType.CLIENT_GOODBYE: client_goodbye,
+    MessageType.STDOUT: stdout_handler,
 }
 
 
@@ -257,9 +298,43 @@ def OnInit():
 def OnSysEx(event: 'FlMidiMsg'):
     # Parse message
     try:
-        msg = FlapiMsg(event.sysex)
+        raw = bytes(event.sysex) if event.sysex is not None else b""
+        if not raw:
+            return
+        global _DEBUG_COUNT
+        if DEBUG_SYSEX and _DEBUG_COUNT < 5:
+            print(f"Flapi Request: sysex len={len(raw)} head={list(raw[:12])} tail={list(raw[-12:])}")
+            _DEBUG_COUNT += 1
+        # If this looks like a Flapi message, mark it handled to avoid
+        # "Not handled" spam in FL Studio's debug output.
+        if (
+            (raw[0] == 0xF0 and raw[1:1 + len(consts.SYSEX_HEADER)] == consts.SYSEX_HEADER)
+            or (raw[:len(consts.SYSEX_HEADER)] == consts.SYSEX_HEADER)
+        ):
+            try:
+                event.handled = True
+            except Exception:
+                pass
+        msg = FlapiMsg(raw)
     except Exception:
+        try:
+            # Debug: print raw header if parse fails
+            if DEBUG_SYSEX:
+                print(f"Flapi Request: unparsed sysex {list(raw[:16])}")
+        except Exception:
+            pass
         return
+
+    if DEBUG_SYSEX and _DEBUG_COUNT < 5:
+        try:
+            print(
+                "Flapi Request: parsed "
+                f"origin={msg.origin} client={msg.client_id} cont={int(msg.continuation)} "
+                f"type={msg.msg_type} status={msg.status_code} len={len(msg.additional_data)}"
+            )
+        except Exception:
+            pass
+        _DEBUG_COUNT += 1
 
     if msg.origin != MessageOrigin.CLIENT:
         return

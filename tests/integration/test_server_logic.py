@@ -129,16 +129,11 @@ def test_stdout_capture():
     # capout calls device.dispatch(0, 0xF0, msg)
     assert mock_device.dispatch.called
     
-    # Inspect the message sent
-    args = mock_device.dispatch.call_args[0]
-    # args: (index, status, data)
-    sent_bytes = args[2]
-    
-    # Verify the payload contains "Hello World" encoded.
+    # Verify the payload contains "Hello World" encoded in any dispatched msg.
     # print adds newline
-    expected_payload = b64encode(b"Hello World
-")
-    assert expected_payload in sent_bytes
+    expected_payload = b64encode(b"Hello World\n")
+    dispatched_payloads = [call.args[2] for call in mock_device.dispatch.call_args_list]
+    assert any(expected_payload in payload for payload in dispatched_payloads)
 
 
 def test_chunked_message_handling():

@@ -17,11 +17,12 @@ class FlapiPortError(IOError):
 
     def __init__(self, port_names: tuple[str, str]) -> None:
         super().__init__(
-            f"Could not create ports {port_names}. On Windows, you need to "
-            f"use software such as Loop MIDI "
+            f"Could not find ports {port_names}. "
+            f"On macOS, start the Flapi port host first: "
+            f"`python3 -m flapi port-host`. "
+            f"On Windows, use Loop MIDI "
             f"(https://www.tobias-erichsen.de/software/loopmidi.html) to "
-            f"create the required ports yourself, as doing so requires a "
-            f"kernel-mode driver, which cannot be bundled in a Python library."
+            f"create the required ports."
         )
 
 

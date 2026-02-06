@@ -10,8 +10,24 @@ Studio.
 It attaches to the "Flapi Response" device and sends MIDI messages back to the
 Flapi client.
 """
+import sys
+from pathlib import Path
 import device
-from _consts import MessageOrigin, MessageType, SYSEX_HEADER, VERSION
+
+# Add the dir containing the bundled flapi package to the PATH.
+# FL Studio's script environment may not define __file__.
+try:
+    _script_dir = Path(__file__).parent
+except NameError:
+    try:
+        _script_dir = Path(device.getScriptPath())
+        if _script_dir.is_file():
+            _script_dir = _script_dir.parent
+    except Exception:
+        _script_dir = Path.cwd()
+sys.path.append(str(_script_dir))
+
+from flapi._consts import MessageOrigin, MessageType, SYSEX_HEADER, VERSION
 
 try:
     from fl_classes import FlMidiMsg
@@ -34,10 +50,18 @@ def OnInit():
 
 
 def OnSysEx(event: 'FlMidiMsg'):
-    header = event.sysex[1:len(SYSEX_HEADER)+1]  # Sysex header
+    if event.sysex is None:
+        return
+    raw = bytes(event.sysex)
+    if not raw:
+        return
+    if raw and raw[0] == 0xF0:
+        header = raw[1:len(SYSEX_HEADER)+1]  # Sysex header
+        sysex_data = raw[len(SYSEX_HEADER)+1:]
+    else:
+        header = raw[:len(SYSEX_HEADER)]
+        sysex_data = raw[len(SYSEX_HEADER):]
     # print_msg("Header", header)
-    # Remaining sysex data
-    sysex_data = event.sysex[len(SYSEX_HEADER)+1:]
     # print_msg("Data", sysex_data)
 
     # Ignore events that don't target the respond script
@@ -47,6 +71,12 @@ def OnSysEx(event: 'FlMidiMsg'):
     # Check message origin
     if sysex_data[0] != MessageOrigin.INTERNAL:
         return
+
+    # Mark as handled to avoid debug spam
+    try:
+        event.handled = True
+    except Exception:
+        pass
 
     # Forward message back to client
     # print_msg(

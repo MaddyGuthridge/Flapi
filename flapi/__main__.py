@@ -6,6 +6,8 @@ A simple program to run Flapi commands
 import click
 from click_default_group import DefaultGroup  # type: ignore
 from .cli import install, repl, uninstall
+from .cli.port_host import port_host_cmd
+from .cli.diag import diag
 from ._consts import VERSION
 
 
@@ -18,6 +20,8 @@ def cli():
 cli.add_command(install)
 cli.add_command(uninstall)
 cli.add_command(repl)
+cli.add_command(port_host_cmd, name="port-host")
+cli.add_command(diag, name="diag")
 
 
 if __name__ == '__main__':

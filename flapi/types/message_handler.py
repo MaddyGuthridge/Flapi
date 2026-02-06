@@ -1,8 +1,10 @@
 """
 # Flapi / Types / Message Handler
 """
-from typing import Optional, Protocol
-from flapi.server.client_context import ClientContext
+from typing import Optional, Protocol, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flapi.server.client_context import ClientContext
 
 
 class ServerMessageHandler(Protocol):
@@ -27,6 +29,6 @@ class ServerMessageHandler(Protocol):
         client_id: int,
         status_code: int,
         msg_data: Optional[bytes],
-        context: ClientContext,
+        context: "ClientContext",
     ) -> int | tuple[int, bytes]:
         ...

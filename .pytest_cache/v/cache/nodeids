@@ -1,8 +1,0 @@
-[
-  "tests/unit/test_flapi_msg.py::test_deserialize_chunked",
-  "tests/unit/test_flapi_msg.py::test_deserialize_simple",
-  "tests/unit/test_flapi_msg.py::test_init_from_args",
-  "tests/unit/test_flapi_msg.py::test_invalid_header",
-  "tests/unit/test_flapi_msg.py::test_serialize_chunking",
-  "tests/unit/test_flapi_msg.py::test_serialize_simple"
-]

@@ -3,8 +3,12 @@
 
 Type definitions for classes and interfaces used by Mido.
 """
-import mido  # type: ignore
 from typing import Protocol, overload, Literal, TYPE_CHECKING
+
+try:
+    import mido  # type: ignore
+except ModuleNotFoundError:
+    mido = None
 
 
 MessageType = Literal["sysex", "note_on", "note_off"]
@@ -33,5 +37,16 @@ if TYPE_CHECKING:
         def receive(self, block: bool = True) -> MidoMsg | None:
             ...
 else:
-    MidoMsg = mido.Message
-    MidoPort = mido.ports.BaseIOPort
+    if mido is None:
+        class MidoMsg:  # type: ignore
+            def __init__(self, type: str, *, data: bytes | None = None) -> None:
+                raise ModuleNotFoundError(
+                    "mido is required at runtime. Install it with: "
+                    "python3 -m pip install mido"
+                )
+
+        class MidoPort:  # type: ignore
+            pass
+    else:
+        MidoMsg = mido.Message
+        MidoPort = mido.ports.BaseIOPort

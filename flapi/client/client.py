@@ -29,7 +29,7 @@ class FlapiClient:
             client_id: int,
             status_code: int,
             msg_data: Optional[bytes],
-            scope: dict[str, Any],
+            context: Any,
         ) -> tuple[int, bytes]:
             """
             Implementation of an eval message type using `pickle` to encode
@@ -42,7 +42,7 @@ class FlapiClient:
             source = b64decode(msg_data).decode()
 
             try:
-                result = eval(source, globals(), scope)
+                result = eval(source, globals(), context.scope)
             except Exception as e:
                 return (1, b64encode(pickle.dumps(e)))
 
