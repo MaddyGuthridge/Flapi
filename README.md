@@ -16,10 +16,8 @@ $ flapi
 
 ## Maintenance
 
-This project is currently unmaintained, with the latest code on the `main`
-branch being half-way through a refactor. To learn more about this decision,
-please have a read of [Unmaintained.md](./Unmaintained.md). Thank you for
-understanding.
+Original author: Maddy Guthridge. Current maintainer and author: Tyler Harden
+(@tylerjharden).
 
 ## Setup
 
@@ -79,6 +77,15 @@ $ flapi
 $ flapi diag --verbose
 OK: Received CLIENT_HELLO response from FL Studio.
 ```
+
+## Release Checklist
+
+1. Run tests: `pytest -q`
+2. Verify macOS port host: `flapi port-host` (handshake succeeds with `flapi diag --verbose`)
+3. Update version in `pyproject.toml` and `flapi/_consts.py`
+4. Build: `poetry build`
+5. Publish: `poetry publish`
+6. Tag release on GitHub and update release notes
 
 #### Server-side execution
 

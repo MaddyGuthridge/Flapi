@@ -2,7 +2,10 @@
 name = "flapi"
 version = "1.0.2"
 description = "Remotely control FL Studio using the MIDI Controller Scripting API"
-authors = ["Maddy Guthridge <hello@maddyguthridge.com>"]
+authors = [
+    "Maddy Guthridge <hello@maddyguthridge.com>",
+    "Tyler Harden <tylerjharden@users.noreply.github.com>",
+]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/MaddyGuthridge/Flapi"
