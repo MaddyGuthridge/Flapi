@@ -3,6 +3,7 @@
 
 Code for initializing/closing Flapi
 """
+
 import logging
 import random
 import mido  # type: ignore
@@ -24,14 +25,13 @@ from .errors import FlapiPortError, FlapiConnectionError, FlapiVersionError
 log = logging.getLogger(__name__)
 
 
-T = TypeVar('T', BaseInput, BaseOutput, covariant=True)
+T = TypeVar("T", BaseInput, BaseOutput, covariant=True)
 
 
 class OpenPortFn(Protocol, Generic[T]):
     """Function that opens a Mido port"""
 
-    def __call__(self, *, name: str, virtual: bool = False) -> T:
-        ...
+    def __call__(self, *, name: str, virtual: bool = False) -> T: ...
 
 
 def open_port(
@@ -44,15 +44,17 @@ def open_port(
     attempt to create it
     """
     for curr_port_name in port_names:  # type: ignore
+        # In mac, Audio MIDI Setup IAC ports always prepend "IAC Driver"
+        # So manually created ports will always be named IAC Driver Flaip Request/Response
+        stripped_curr_port_name = curr_port_name.replace("IAC Driver", "")
+        if port_name.lower() not in stripped_curr_port_name.lower():
+            continue
+
         # If the only thing after it is a number, we are free to connect to it
         # It seems that something appends these numbers to each MIDI device to
         # make them more unique or something
-        if port_name.lower() not in curr_port_name.lower():
-            continue
-        try:
-            # If this works, it's a match
-            int(curr_port_name.replace(port_name, '').strip())
-        except Exception:
+        numeric_curr_port_name = stripped_curr_port_name.replace(port_name, "").strip()
+        if numeric_curr_port_name.isdigit():
             continue
 
         # Connect to it
@@ -101,11 +103,11 @@ def enable(
 
     if res is None or req is None:
         try:
-            req = mido.open_output(  # type: ignore
+            req = mido.open_ioport(  # type: ignore
                 name=req_port,
                 virtual=True,
             )
-            res = mido.open_input(  # type: ignore
+            res = mido.open_ioport(  # type: ignore
                 name=res_port,
                 virtual=True,
             )
@@ -129,7 +131,8 @@ def init(client_id: int):
     """
     if not try_init(client_id):
         raise FlapiConnectionError(
-            "FL Studio did not connect to Flapi - is it running?")
+            "FL Studio did not connect to Flapi - is it running?"
+        )
 
 
 def try_init(client_id: int) -> bool:
