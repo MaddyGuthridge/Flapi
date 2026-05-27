@@ -1,12 +1,13 @@
-[tool.poetry]
+[project]
 name = "flapi"
 version = "1.0.1"
 description = "Remotely control FL Studio using the MIDI Controller Scripting API"
-authors = ["Maddy Guthridge <hello@maddyguthridge.com>"]
-license = "MIT"
+authors = [
+    {name = "Maddy Guthridge", email = "hello@maddyguthridge.com"},
+]
+license = {text = "MIT"}
 readme = "README.md"
-repository = "https://github.com/MaddyGuthridge/Flapi"
-
+requires-python = ">=3.12"
 keywords = [
     "fl",
     "studio",
@@ -17,50 +18,48 @@ keywords = [
     "remote",
     "remote control",
 ]
-
 classifiers = [
     "Programming Language :: Python :: 3",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS :: MacOS X",
     "Development Status :: 4 - Beta",
     "Environment :: Other Environment",
     "Typing :: Typed",
 ]
+dependencies = [
+    "fl-studio-api-stubs>=37.0.0",
+    "mido[ports-rtmidi]>=1.3.2",
+    "typing-extensions>=4.9.0",
+    "click>=8.1.7",
+    "click-default-group>=1.2.4",
+]
 
-include = ["py.typed"]
-
-
-packages = [{ include = "flapi" }]
-
-[tool.poetry.urls]
+[project.urls]
 "Online Documentation" = "https://maddyguthridge.github.io/Flapi"
 "Bug Tracker" = "https://github.com/MaddyGuthridge/Flapi/issues"
 
-[tool.poetry.scripts]
+[project.scripts]
 flapi = "flapi.__main__:cli"
+
+[project.optional-dependencies]
+ipython = ["ipython>=8.18.1,<10.0.0"]
+
+[dependency-groups]
+dev = ["mypy>=1.8.0", "flake8>=7.0.0"]
+[tool.uv]
+# Exclude dependency releases newer than 1 week, in order to reduce supply-chain
+# risk.
+exclude-newer = "1 week"
+
+[build-system]
+requires = ["uv_build>=0.9.5,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "flapi"
+module-root = ""
 
 [tool.mypy]
 exclude = ['flapi/server/*']
 python_version = "3.12"
-
-[tool.poetry.dependencies]
-python = "^3.12"
-fl-studio-api-stubs = ">=37.0.0"
-mido = { extras = ["ports-rtmidi"], version = "^1.3.2" }
-typing-extensions = "^4.9.0"
-ipython = { version = ">=8.18.1,<10.0.0", optional = true }
-click = "^8.1.7"
-click-default-group = "^1.2.4"
-
-[tool.poetry.extras]
-ipython = ["ipython"]
-
-[tool.poetry.group.dev.dependencies]
-mypy = "^1.8.0"
-flake8 = "^7.0.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

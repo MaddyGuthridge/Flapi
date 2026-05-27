@@ -1,3 +1,4 @@
+# Publish a Python package to PyPi using uv
 name: Publish Package on PyPi
 
 on:
@@ -7,22 +8,23 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          submodules: true
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+          # Intentionally disabled to prevent poisoning
+          enable-cache: false
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.12
-
-      # Install dependencies using Poetry
-      - uses: Gr1N/setup-poetry@v9
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-      - run: poetry --version
-      - run: poetry install --all-extras
-      - name: Build and publish package
-        run: poetry publish --build -u __token__ -p ${{ secrets.PYPI_API_TOKEN }}
+          # Pinned Python version
+          python-version-file: ".python-version"
+      - name: Build package
+        run: uv build
+      - name: Publish package
+        run: uv publish
