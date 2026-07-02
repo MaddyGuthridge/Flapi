@@ -46,7 +46,13 @@ flapi = "flapi.__main__:cli"
 ipython = ["ipython>=8.18.1,<10.0.0"]
 
 [dependency-groups]
-dev = ["mypy>=1.8.0", "flake8>=7.0.0"]
+dev = [
+    "pytest>=7.3.1,<10.0.0",
+    "mypy>=1.19.1",
+    "typing-extensions>=4.15.0",
+    "coverage>=7.10.7",
+    "ruff>=0.14.10",
+]
 [tool.uv]
 # Exclude dependency releases newer than 1 week, in order to reduce supply-chain
 # risk.
